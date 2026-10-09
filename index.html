@@ -1,0 +1,1899 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tiro Libre Parabólico · Feria de Física</title>
+<meta name="description" content="Simulación interactiva de tiros libres para aprender movimiento parabólico: ángulo, velocidad, gravedad, resistencia del aire y efecto Magnus apuntando directamente con el ratón.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+/* =====================================================================
+   ESTILOS VISUALES - TIRO LIBRE PARABÓLICO
+   Diseño de estadio interactivo inmersivo, controles dinámicos con ratón
+   y modo reto para la feria de física.
+   ===================================================================== */
+:root{
+  color-scheme:dark;
+  --night:#070b14; --panel:#0f1728; --panel2:#152238; --panel3:#1c2d4a; --line:#253754;
+  --chalk:#f3f6fa; --muted:#94a5c2; --flood:#ffd23f; --flood-glow:rgba(255,210,63,.35);
+  --grass:#239653; --miss:#ff5c5c; --ok:#4ee386; --cyan:#38d9d4; --gold:#f6c343;
+  --display:'Anton','Impact','Arial Narrow',sans-serif;
+  --body:'Barlow','Segoe UI',system-ui,sans-serif;
+  --data:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;color:var(--chalk);font-family:var(--body);font-size:16px;line-height:1.45;
+  background:radial-gradient(ellipse 1100px 420px at 50% -120px,rgba(255,210,63,.14),transparent 75%),
+             radial-gradient(ellipse 900px 500px at 15% 100%,rgba(35,150,83,.08),transparent 70%),
+             var(--night);
+  min-height:100vh;
+}
+.app{max-width:1600px;margin:0 auto;padding-inline:20px;padding-block:18px 36px;display:flex;flex-direction:column;gap:18px}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--flood);outline-offset:2px}
+
+/* ---------- Encabezado ---------- */
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px 24px}
+.brand h1{font-family:var(--display);font-weight:400;font-size:clamp(32px,5vw,52px);line-height:1;margin:0;letter-spacing:.02em;text-transform:uppercase}
+.brand h1 span{color:var(--flood);text-shadow:0 0 16px var(--flood-glow)}
+.brand .sub{color:var(--muted);margin:8px 0 0;font-size:15px;max-width:70ch}
+
+.header-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.score{display:flex;gap:6px;font-family:var(--data);font-variant-numeric:tabular-nums}
+.score div{background:var(--panel);border:1px solid var(--line);padding:7px 16px;min-width:78px;text-align:center;border-radius:4px;box-shadow:0 3px 10px rgba(0,0,0,.3)}
+.score div.lvl{border-color:var(--flood);background:linear-gradient(180deg,var(--panel2),var(--panel))}
+.score b{display:block;font-family:var(--display);font-weight:400;font-size:28px;line-height:1.1;color:var(--flood)}
+.score small{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+
+.btn-header{
+  display:inline-flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);color:var(--chalk);
+  padding:8px 14px;border-radius:4px;font:700 14px var(--data);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
+  transition:all .15s ease;
+}
+.btn-header:hover{border-color:var(--flood);background:var(--panel2);transform:translateY(-1px)}
+.btn-header.active{background:var(--flood);color:#121008;border-color:var(--flood);font-weight:800;box-shadow:0 0 14px var(--flood-glow)}
+.btn-header svg{width:20px;height:20px;flex:none}
+.btn-header .off{display:none}
+.btn-header.muted .on{display:none}
+.btn-header.muted .off{display:inline}
+
+/* Barra del Modo Reto Feria */
+.reto-bar{
+  background:linear-gradient(90deg,#19263e,#1a3429);border:1px solid var(--gold);padding:12px 18px;border-radius:6px;
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 6px 20px rgba(0,0,0,.4);
+}
+.reto-info{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.reto-tag{background:var(--flood);color:#121008;padding:4px 10px;border-radius:3px;font:800 13px var(--data);letter-spacing:.1em;text-transform:uppercase}
+.reto-user{font-family:var(--display);font-size:24px;color:var(--chalk);letter-spacing:.03em}
+.reto-stats{display:flex;gap:14px;font-family:var(--data);font-size:17px;font-weight:700;color:var(--flood)}
+.reto-stats span{color:var(--chalk);font-weight:500}
+.reto-btns{display:flex;gap:8px}
+.btn-sm{background:var(--panel2);border:1px solid var(--line);color:var(--chalk);padding:6px 12px;font:700 13px var(--data);letter-spacing:.05em;text-transform:uppercase;border-radius:3px;cursor:pointer}
+.btn-sm:hover{border-color:var(--flood);color:var(--flood)}
+
+/* Guía rápida colapsable */
+.howto{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--flood);border-radius:4px}
+.howto summary{cursor:pointer;padding:10px 18px;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;list-style:none;font-family:var(--data);font-weight:700;font-size:16px;letter-spacing:.1em;text-transform:uppercase}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::before{content:'▸';color:var(--flood);display:inline-block;transition:transform .2s}
+.howto[open] summary::before{transform:rotate(90deg)}
+.howto summary small{color:var(--muted);font:500 14px var(--body);letter-spacing:0;text-transform:none}
+.steps{list-style:none;margin:0;padding:0 18px 14px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;counter-reset:paso}
+.steps li{counter-increment:paso;background:var(--panel2);padding:12px 14px;font-size:14px;color:#d5e0f2;border-radius:4px}
+.steps li::before{content:counter(paso);font-family:var(--display);font-size:32px;color:var(--flood);line-height:1;float:left;margin-right:12px}
+.steps b{display:block;color:var(--chalk);font-family:var(--data);font-size:17px;letter-spacing:.03em;margin-bottom:2px}
+
+/* ---------- Grid Principal ---------- */
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:20px;align-items:start}
+
+/* ---------- Estadio (Canvas) ---------- */
+.stage{position:relative;background:#000;border:1px solid var(--line);border-radius:6px;overflow:hidden;aspect-ratio:16/9;max-width:100%;box-shadow:0 12px 36px rgba(0,0,0,.6)}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none}
+.stage.dragging{cursor:grabbing}
+.stage.aiming-ready{cursor:grab}
+
+/* Chips del estadio */
+.chip{position:absolute;top:12px;left:12px;background:rgba(8,14,26,.84);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(6px);padding:6px 12px;border-radius:4px;font-family:var(--data);font-size:16px;letter-spacing:.04em;z-index:5}
+.chip b{color:var(--flood);font-weight:700}
+.chip.r{left:auto;right:12px}
+.chip.bl{top:auto;bottom:14px}
+.chip.br{top:auto;bottom:14px;left:auto;right:12px;color:var(--muted)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--flood);margin-right:8px;box-shadow:0 0 0 3px rgba(255,210,63,.25);vertical-align:1px}
+
+/* HUD Lateral en el estadio mientras arrastras */
+.hud-mouse{
+  position:absolute;bottom:54px;left:14px;background:rgba(9,17,32,.90);border:1px solid var(--flood);
+  border-radius:6px;padding:10px 14px;display:flex;flex-direction:column;gap:5px;font-family:var(--data);
+  font-size:15px;letter-spacing:.04em;box-shadow:0 6px 20px rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:6;
+  pointer-events:none;transition:opacity .2s;
+}
+.hud-mouse[hidden]{display:none}
+.hud-mouse h5{margin:0 0 2px;font:700 13px var(--data);letter-spacing:.12em;text-transform:uppercase;color:var(--flood)}
+.hud-mouse .hud-row{display:flex;justify-content:space-between;gap:14px}
+.hud-mouse .hud-row b{color:var(--chalk);font-variant-numeric:tabular-nums;font-size:16px}
+.hud-mouse .hud-row.curva b{color:var(--cyan)}
+
+/* Banner de nivel y banners de resultado */
+.level-banner{
+  position:absolute;top:55px;left:50%;transform:translateX(-50%);background:linear-gradient(180deg,#ffd84d,#e6b41d);
+  color:#141108;padding:10px 30px;border-radius:6px;font-family:var(--display);font-size:32px;letter-spacing:.05em;
+  text-transform:uppercase;box-shadow:0 10px 30px rgba(0,0,0,.7);z-index:20;pointer-events:none;animation:pop .4s cubic-bezier(.2,1.4,.4,1);
+}
+.banner{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:10px;background:radial-gradient(ellipse at center,rgba(4,8,16,.90),rgba(4,8,16,.55) 85%);
+  z-index:25;pointer-events:auto;overflow-y:auto;
+}
+.banner[hidden]{display:none}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+
+/* Tarjeta interactiva de diagnóstico en pantalla */
+.diag-card{
+  background:rgba(12,20,36,0.97);border:1.5px solid var(--flood);border-radius:8px;max-width:880px;width:100%;
+  max-height:92%;overflow-y:auto;padding:16px 20px;box-shadow:0 16px 48px rgba(0,0,0,.85);display:flex;
+  flex-direction:column;gap:12px;text-align:left;animation:pop .3s cubic-bezier(.2,1.2,.3,1);backdrop-filter:blur(10px);
+}
+.diag-card.bad{border-color:var(--miss)}
+.diag-card.warn{border-color:var(--flood)}
+.diag-card.good{border-color:var(--ok)}
+
+.diag-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.diag-title-group{display:flex;flex-direction:column;gap:4px}
+.diag-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:4px;font:700 13px var(--data);letter-spacing:.08em;text-transform:uppercase;width:fit-content}
+.diag-badge.bad{background:rgba(255,92,92,.2);color:var(--miss);border:1px solid var(--miss)}
+.diag-badge.warn{background:rgba(255,210,63,.2);color:var(--flood);border:1px solid var(--flood)}
+.diag-badge.good{background:rgba(78,227,134,.2);color:var(--ok);border:1px solid var(--ok)}
+
+.diag-header h2{font-family:var(--display);font-size:clamp(26px,4vw,38px);margin:0;line-height:1;letter-spacing:.02em;text-transform:uppercase;color:var(--chalk)}
+.diag-card.bad .diag-header h2{color:var(--miss)}
+.diag-card.good .diag-header h2{color:var(--ok)}
+.diag-card.warn .diag-header h2{color:var(--flood)}
+
+.diag-close-btn{background:transparent;border:1px solid var(--line);color:var(--muted);width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;display:grid;place-items:center;transition:all .15s}
+.diag-close-btn:hover{color:var(--chalk);border-color:var(--flood);background:var(--panel2)}
+
+.diag-quick-msg{margin:0;font-size:14.5px;color:#d8e2f0;line-height:1.4}
+
+/* Grid de Fuerzas Aplicadas */
+.diag-forces-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.force-card{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.force-card.force-g{border-left:3px solid var(--miss)}
+.force-card.force-d{border-left:3px solid var(--flood)}
+.force-card.force-m{border-left:3px solid var(--cyan)}
+
+.force-head{display:flex;justify-content:space-between;align-items:center;gap:6px;font-family:var(--data);font-size:14px}
+.force-head b{color:var(--chalk);letter-spacing:.02em}
+.force-val{font:700 16px var(--data);font-variant-numeric:tabular-nums;color:var(--flood)}
+.force-card.force-g .force-val{color:#ff8585}
+.force-card.force-m .force-val{color:var(--cyan)}
+
+.force-bar-track{width:100%;height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.force-bar-fill{height:100%;border-radius:3px;transition:width .4s ease}
+.force-card.force-g .force-bar-fill{background:#ff5c5c}
+.force-card.force-d .force-bar-fill{background:var(--flood)}
+.force-card.force-m .force-bar-fill{background:var(--cyan)}
+.force-desc{font-size:12px;color:var(--muted);line-height:1.3}
+
+/* Secciones de Explicación del Suceso y Mejora */
+.diag-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.diag-detail-box{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:10px 14px}
+.diag-detail-box.mejora{border-left:3px solid var(--ok);background:rgba(35,150,83,.08)}
+.diag-detail-box h4{margin:0 0 5px;font:700 13px var(--data);letter-spacing:.1em;text-transform:uppercase;color:var(--flood)}
+.diag-detail-box.mejora h4{color:var(--ok)}
+.diag-detail-box p{margin:0;font-size:14px;color:#dce5f2;line-height:1.45;white-space:pre-line}
+
+/* Fórmulas para la feria */
+.diag-formulas{background:rgba(8,14,26,.7);border:1px solid var(--line);border-radius:6px;padding:10px 14px}
+.diag-formulas h4{margin:0 0 8px;font:700 13px var(--data);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.formulas-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.formula-item{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:8px 10px;font-size:12.5px;display:flex;flex-direction:column;gap:2px}
+.formula-item b{font-family:Georgia,serif;color:var(--flood);font-size:13.5px}
+.formula-item span{color:var(--chalk);font-family:var(--data);font-size:13px}
+.formula-item small{color:var(--muted);font-size:11.5px;margin-top:2px}
+
+/* Barra de Acciones del Diagnóstico */
+.diag-actions{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid var(--line);padding-top:10px}
+.diag-pause-toggle{font-size:13.5px}
+.diag-btns{display:flex;gap:8px}
+
+/* Panel Permanente de Laboratorio */
+.diag-lab-panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:18px;display:flex;flex-direction:column;gap:14px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.diag-lab-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.diag-lab-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.diag-lab-card{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.diag-lab-card.col-wide{grid-column:1 / -1}
+.diag-lab-card h4{margin:0;font:700 14px var(--data);letter-spacing:.1em;text-transform:uppercase;color:var(--flood)}
+.diag-mini-table{width:100%;border-collapse:collapse;font-size:13.5px}
+.diag-mini-table td{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.diag-mini-table td:last-child{text-align:right;font:700 15px var(--data);color:var(--chalk)}
+.lab-speech{background:rgba(9,17,32,.7);border-left:3px solid var(--cyan);padding:10px 14px;border-radius:4px;font-size:14px;color:#d3dced;line-height:1.5}
+.lab-speech b{color:var(--flood)}
+
+
+/* ---------- Tablero de Mando ---------- */
+.controls,.lab{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:18px}
+.controls{display:flex;flex-direction:column;gap:15px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.group{display:flex;flex-direction:column;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+h3{font-family:var(--data);font-weight:700;font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0;display:flex;align-items:center}
+h3 .n{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--flood);color:#16130a;font-size:13px;letter-spacing:0;margin-right:8px;font-weight:800}
+
+.ctl{display:flex;flex-direction:column;gap:4px}
+.ctl label{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:600;font-size:15px}
+.ctl output{font-family:var(--data);font-size:20px;font-weight:700;color:var(--flood);font-variant-numeric:tabular-nums;text-align:right}
+.help{color:var(--muted);font-size:13px;line-height:1.35}
+input[type=range]{width:100%;accent-color:var(--flood);margin:3px 0;height:6px;cursor:pointer}
+input[type=range]:disabled{opacity:.35;cursor:not-allowed}
+
+.seg{display:flex;flex-wrap:wrap;gap:5px}
+.seg button{flex:1 1 auto;background:var(--panel2);color:var(--chalk);border:1px solid var(--line);padding:8px 10px;font:700 14px var(--data);letter-spacing:.04em;border-radius:4px;cursor:pointer;transition:all .15s}
+.seg button:hover{border-color:var(--flood);background:var(--panel3)}
+.seg button[aria-pressed=true]{background:var(--flood);border-color:var(--flood);color:#151208;box-shadow:0 2px 8px var(--flood-glow)}
+
+/* Predicción física */
+.hint{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:12px 14px;display:flex;flex-direction:column;gap:7px}
+.hint h4{margin:0;font:700 13px var(--data);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.hint p{margin:0;font-size:14px;display:flex;gap:10px;align-items:flex-start}
+.hint p::before{content:'';flex:none;width:10px;height:10px;border-radius:50%;margin-top:5px;background:var(--muted)}
+.hint p.ok::before{background:var(--ok)}
+.hint p.warn::before{background:var(--flood)}
+.hint p.bad::before{background:var(--miss)}
+.hint small{color:var(--muted);font-size:12.5px}
+
+.check{display:flex;gap:10px;align-items:center;font-weight:600;cursor:pointer;font-size:15px}
+.check input{accent-color:var(--flood);width:18px;height:18px}
+
+.kick{
+  background:var(--flood);color:#151208;border:0;padding:15px;font-family:var(--display);font-size:26px;letter-spacing:.06em;
+  text-transform:uppercase;border-radius:5px;cursor:pointer;box-shadow:0 6px 0 #b38c19, 0 10px 24px rgba(255,210,63,.25);
+  transition:all .12s ease;
+}
+.kick:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px)}
+.kick:active:not(:disabled){transform:translateY(4px);box-shadow:0 2px 0 #b38c19}
+.kick:disabled{opacity:.45;cursor:default;box-shadow:none}
+
+.ghost{background:none;border:1px solid var(--line);color:var(--chalk);padding:10px;font:700 15px var(--data);letter-spacing:.08em;text-transform:uppercase;border-radius:4px;cursor:pointer;transition:border-color .15s}
+.ghost:hover:not(:disabled){border-color:var(--flood);color:var(--flood)}
+.ghost:disabled{opacity:.45;cursor:default}
+
+.keys summary{cursor:pointer;color:var(--muted);font:700 13px var(--data);letter-spacing:.08em;text-transform:uppercase}
+.keys ul{margin:8px 0 0;padding:0;list-style:none;display:grid;gap:6px;font-size:13.5px;color:var(--muted)}
+kbd{font:700 12px var(--data);background:var(--panel2);border:1px solid var(--line);border-bottom-width:2px;border-radius:3px;padding:2px 7px;color:var(--chalk)}
+
+/* ---------- Laboratorio de Física ---------- */
+.lab{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:24px;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.lab>div{min-width:0;display:flex;flex-direction:column;gap:12px}
+#graph{width:100%;height:270px;display:block;background:#091120;border:1px solid var(--line);border-radius:5px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:13.5px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:8px}
+.sw{display:inline-block;width:24px;height:0;border-top:3px solid var(--flood)}
+.sw.dash{border-top-style:dashed;opacity:.8}
+.sw.bar{width:6px;height:15px;border:0;background:#e9edf5}
+
+.live,.glossary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.live div,.glossary div{background:var(--panel2);padding:8px 10px;border-radius:4px;border:1px solid var(--line)}
+.live small,.glossary small{display:block;color:var(--muted);font:700 12px var(--data);letter-spacing:.1em;text-transform:uppercase}
+.live b{font:700 23px var(--data);font-variant-numeric:tabular-nums}
+.glossary i{font-family:Georgia,'Times New Roman',serif;color:var(--flood);font-size:18px}
+.glossary b{font:700 17px var(--data);font-variant-numeric:tabular-nums}
+
+table{width:100%;border-collapse:collapse;font-size:15px}
+td{padding:7px 0;border-bottom:1px solid var(--line);vertical-align:baseline}
+td:last-child{text-align:right;font:700 18px var(--data);color:var(--flood);white-space:nowrap;font-variant-numeric:tabular-nums;padding-left:10px}
+td i{font-family:Georgia,'Times New Roman',serif;color:var(--muted);font-size:14px;display:block}
+.note{color:var(--muted);font-size:13.5px;margin:0}
+#verdict{font-weight:700;color:var(--chalk)}
+footer{color:var(--muted);font-size:13.5px;text-align:center;padding:10px 0}
+
+/* Modal en pantalla para Modo Reto (sin alert/prompt) */
+.modal-overlay{position:fixed;inset:0;background:rgba(4,7,14,.85);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal-overlay[hidden]{display:none}
+.modal-card{background:var(--panel);border:1px solid var(--flood);border-radius:8px;max-width:540px;width:100%;padding:26px;box-shadow:0 16px 40px rgba(0,0,0,.8);display:flex;flex-direction:column;gap:16px}
+.modal-card h3{font-family:var(--display);font-size:32px;letter-spacing:.03em;color:var(--flood);margin:0;line-height:1}
+.modal-card p{margin:0;font-size:15px;color:#d3dced}
+.modal-card input[type=text]{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--chalk);padding:12px 14px;border-radius:4px;font-family:var(--body);font-size:16px}
+.modal-card input[type=text]:focus{border-color:var(--flood);outline:none}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end}
+.btn-primary{background:var(--flood);color:#121008;border:0;padding:10px 20px;font:700 15px var(--data);letter-spacing:.06em;text-transform:uppercase;border-radius:4px;cursor:pointer}
+.btn-sec{background:transparent;border:1px solid var(--line);color:var(--chalk);padding:10px 18px;font:700 15px var(--data);letter-spacing:.06em;text-transform:uppercase;border-radius:4px;cursor:pointer}
+
+/* Tabla de los mejores 10 */
+.rank-table{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:6px}
+.rank-table th{text-align:left;font-family:var(--data);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding-bottom:6px;border-bottom:1px solid var(--line)}
+.rank-table td{padding:6px 4px;border-bottom:1px solid rgba(255,255,255,.07)}
+.rank-table tr:first-child td{color:var(--gold);font-weight:700}
+
+/* Adaptación responsive */
+@media (max-width:1100px){
+  .grid{grid-template-columns:minmax(0,1fr)}
+  .lab{grid-template-columns:minmax(0,1fr)}
+  .steps{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kick{position:sticky;bottom:10px;z-index:8}
+}
+@media (max-width:850px){
+  .diag-forces-grid{grid-template-columns:repeat(1,minmax(0,1fr))}
+  .diag-details{grid-template-columns:repeat(1,minmax(0,1fr))}
+  .formulas-grid{grid-template-columns:repeat(1,minmax(0,1fr))}
+  .diag-lab-grid{grid-template-columns:repeat(1,minmax(0,1fr))}
+}
+@media (max-width:600px){
+  .chip.br{display:none}
+  .score div{min-width:0;flex:1;padding:6px 6px}
+  .score b{font-size:22px}
+  .steps{grid-template-columns:minmax(0,1fr)}
+  .diag-card{padding:12px 14px}
+  .diag-header h2{font-size:24px}
+}
+@media (max-width:480px){
+  .live,.glossary{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .chip{font-size:13px;padding:4px 8px}
+  .chip.bl{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ================= ENCABEZADO Y MARCADOR ================= -->
+  <header>
+    <div class="brand">
+      <h1>Tiro libre <span>parabólico</span></h1>
+      <p class="sub">Apunta con el ratón directamente sobre el balón: arrastra para elegir dirección, velocidad, elevación y comba. ¡Supera la barrera usando física!</p>
+    </div>
+    <div class="header-actions">
+      <div class="score" aria-live="polite">
+        <div class="lvl"><b id="sLevel">1</b><small>Nivel</small></div>
+        <div><b id="sGoals">0</b><small>Goles</small></div>
+        <div><b id="sShots">0</b><small>Tiros</small></div>
+        <div><b id="sStreak">0</b><small>Racha</small></div>
+        <div><b id="sBest">0</b><small>Récord</small></div>
+      </div>
+      <button class="btn-header" id="btnRetoMode" type="button" title="Activar Modo Reto Feria para visitantes">
+        🏆 <span id="retoBtnTxt">Modo Reto</span>
+      </button>
+      <button class="btn-header" id="btnLeaderboard" type="button" title="Ver ranking de los 10 mejores tiros">
+        🎖️ <span>Top 10</span>
+      </button>
+      <button class="btn-header" id="btnMute" type="button" title="Silenciar o activar sonido (tecla M)">
+        <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>
+        <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6"/><path d="m16 9 6 6"/></svg>
+        <span id="muteTxt">Sonido</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= BARRA DE MODO RETO FERIA (cuando está activo) ================= -->
+  <div class="reto-bar" id="retoBar" hidden>
+    <div class="reto-info">
+      <span class="reto-tag">Modo Reto Feria Activo</span>
+      <span class="reto-user">Jugador: <b id="rUser" style="color:var(--flood)">–</b></span>
+      <div class="reto-stats">
+        <div>Tiros restantes: <span id="rShotsLeft">5</span> / 5</div>
+        <div>Puntos: <span id="rPoints">0</span></div>
+      </div>
+    </div>
+    <div class="reto-btns">
+      <button class="btn-sm" id="btnEndReto" type="button">Finalizar Reto</button>
+    </div>
+  </div>
+
+  <!-- ================= GUÍA RÁPIDA ================= -->
+  <details class="howto" open>
+    <summary>¿Cómo se juega con el ratón? <small>Control táctil e intuitivo · toca aquí para ocultar o mostrar</small></summary>
+    <ol class="steps">
+      <li><b>1. Presiona y arrastra</b>Haz clic sostenido sobre el balón. Mueve el ratón hacia atrás o hacia adelante para ajustar potencia y dirección.</li>
+      <li><b>2. Aplica curva (efecto)</b>Mueve el ratón en diagonal a los costados para darle comba al balón (efecto Magnus) y rodear la barrera.</li>
+      <li><b>3. Suelta para patear</b>Al soltar el clic, el balón saldrá disparado con la física calculada. ¡También puedes pulsar "Patear"!</li>
+      <li><b>4. Mira los datos en vivo</b>A la izquierda del estadio verás en tiempo real los grados, velocidad y comba mientras apuntas con el ratón.</li>
+    </ol>
+  </details>
+
+  <div class="grid">
+
+    <!-- ================= ESTADIO ================= -->
+    <section class="stage aiming-ready" id="stageSection" aria-label="Estadio de fútbol">
+      <canvas id="game" role="img" aria-label="Estadio con el balón, la barrera, el arquero y el arco"></canvas>
+      <div class="chip">Distancia al arco <b id="cDist">–</b></div>
+      <div class="chip r"><span id="cPlace">Tierra</span> · g = <b id="cG">9,81</b> m/s²</div>
+      <div class="chip bl" id="legendChip"><span class="dot"></span>Trayectoria prevista</div>
+      <div class="chip br" id="cState">Arrastra el balón para apuntar</div>
+      
+      <!-- HUD dinámico que se muestra mientras arrastras con el ratón -->
+      <div class="hud-mouse" id="hudMouse" hidden>
+        <h5>🎯 Parámetros del tiro</h5>
+        <div class="hud-row"><span>Ángulo θ:</span><b id="hudAngle">20.0°</b></div>
+        <div class="hud-row"><span>Velocidad v₀:</span><b id="hudSpeed">22.0 m/s</b></div>
+        <div class="hud-row"><span>Dirección:</span><b id="hudDir">0.0°</b></div>
+        <div class="hud-row curva"><span>Efecto Magnus:</span><b id="hudSpin">0%</b></div>
+      </div>
+
+      <div class="level-banner" id="lvlBanner" hidden aria-live="assertive"></div>
+      
+      <!-- ================= BANNER Y DIAGNÓSTICO FÍSICO DEL TIRO EN PANTALLA ================= -->
+      <div class="banner" id="banner" hidden aria-live="polite">
+        <div class="diag-card" id="diagCard">
+          <div class="diag-header">
+            <div class="diag-title-group">
+              <span class="diag-badge" id="dBadge">🛑 En la barrera</span>
+              <h2 id="bTitle">En la barrera</h2>
+            </div>
+            <button class="diag-close-btn" id="btnDiagClose" type="button" title="Cerrar y pasar al siguiente tiro">✕</button>
+          </div>
+          
+          <p class="diag-quick-msg" id="bText"></p>
+          
+          <!-- Grid de las 3 Fuerzas Aplicadas -->
+          <div class="diag-forces-grid">
+            <div class="force-card force-g">
+              <div class="force-head">
+                <span class="force-icon">🔻</span>
+                <b>Gravedad (Peso)</b>
+                <span class="force-val" id="dFg">4,22 N</span>
+              </div>
+              <div class="force-bar-track"><div class="force-bar-fill" id="dFgBar" style="width:53%"></div></div>
+              <small class="force-desc">Fuerza vertical hacia abajo: <i>F_g = m · g</i>. Hace caer el balón en parábola.</small>
+            </div>
+            <div class="force-card force-d">
+              <div class="force-head">
+                <span class="force-icon">💨</span>
+                <b>Resistencia del Aire</b>
+                <span class="force-val" id="dFd">2,77 N</span>
+              </div>
+              <div class="force-bar-track"><div class="force-bar-fill" id="dFdBar" style="width:35%"></div></div>
+              <small class="force-desc">Arrastre aerodinámico: <i>F_d = ½ C_d ρ A v²</i>. Frena y achata la curva real.</small>
+            </div>
+            <div class="force-card force-m">
+              <div class="force-head">
+                <span class="force-icon">🌀</span>
+                <b>Efecto Magnus</b>
+                <span class="force-val" id="dFm">1,38 N</span>
+              </div>
+              <div class="force-bar-track"><div class="force-bar-fill" id="dFmBar" style="width:17%"></div></div>
+              <small class="force-desc">Fuerza lateral por giro: <i>F_M ∝ ω × v</i>. Curva el balón por Bernoulli.</small>
+            </div>
+          </div>
+
+          <!-- Explicación Pedagógica del Suceso y Mejora -->
+          <div class="diag-details">
+            <div class="diag-detail-box">
+              <h4>🔍 ¿Qué sucedió físicamente?</h4>
+              <p id="dQuePaso"></p>
+            </div>
+            <div class="diag-detail-box mejora">
+              <h4>💡 ¿Qué debes mejorar para el próximo tiro?</h4>
+              <p id="dQueMejorar"></p>
+            </div>
+          </div>
+
+          <!-- Fórmulas Clave para Defender en la Feria -->
+          <div class="diag-formulas">
+            <h4>📐 Fórmulas aplicadas en este tiro (para explicar en la feria)</h4>
+            <div class="formulas-grid" id="dFormulas">
+              <!-- Generado dinámicamente -->
+            </div>
+          </div>
+
+          <!-- Barra de Acciones del Diagnóstico -->
+          <div class="diag-actions">
+            <div class="diag-pause-toggle">
+              <label class="check">
+                <input type="checkbox" id="chkPauseExplain" checked>
+                <span>Pausar pantalla para explicar al jurado</span>
+              </label>
+            </div>
+            <div class="diag-btns">
+              <button class="btn-sec" id="btnRetryShot" type="button">🔄 Reintentar este tiro</button>
+              <button class="btn-primary" id="btnNextShot" type="button">▶ Siguiente tiro (Espacio)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TABLERO DE MANDO ================= -->
+    <aside class="controls" aria-label="Controles del tiro">
+
+      <div class="group">
+        <h3><span class="n">1</span>Ajustes del remate</h3>
+        <div class="ctl">
+          <label for="inAngle">Ángulo de elevación θ <output id="oAngle"></output></label>
+          <input id="inAngle" type="range" min="4" max="45" step="0.5" value="20" aria-describedby="hAngle">
+          <small class="help" id="hAngle">Inclinación vertical: determina si pasa la barrera y no supera el travesaño.</small>
+        </div>
+        <div class="ctl">
+          <label for="inSpeed">Velocidad v₀ <output id="oSpeed"></output></label>
+          <input id="inSpeed" type="range" min="12" max="36" step="0.5" value="22" aria-describedby="hSpeed">
+          <small class="help" id="hSpeed">Rapidez de salida: más velocidad le da menos tiempo de reacción al arquero.</small>
+        </div>
+        <div class="ctl">
+          <label for="inDir">Dirección <output id="oDir"></output></label>
+          <input id="inDir" type="range" min="-22" max="22" step="0.25" value="0" aria-describedby="hDir">
+          <small class="help" id="hDir">Apunta hacia la izquierda o derecha del arco con respecto a la barrera.</small>
+        </div>
+        <div class="ctl">
+          <label for="inSpin">Efecto (comba) <output id="oSpin"></output></label>
+          <input id="inSpin" type="range" min="-100" max="100" step="5" value="0" aria-describedby="spinNote">
+          <small class="help" id="spinNote">El giro del balón lo desvía lateralmente por diferencia de presión (efecto Magnus).</small>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3><span class="n">2</span>Dónde se juega (Gravedad)</h3>
+        <div class="seg" id="segPlace" role="group" aria-label="Lugar donde se juega">
+          <button type="button" data-v="tierra" aria-pressed="true">Tierra</button>
+          <button type="button" data-v="vacio" aria-pressed="false">Sin aire</button>
+          <button type="button" data-v="marte" aria-pressed="false">Marte</button>
+          <button type="button" data-v="luna" aria-pressed="false">Luna</button>
+        </div>
+        <small class="help" id="placeNote"></small>
+      </div>
+
+      <div class="group">
+        <h3><span class="n">3</span>Arquero y modalidad</h3>
+        <div class="seg" id="segDiff" role="group" aria-label="Velocidad del arquero y modo de juego">
+          <button type="button" data-v="prog" aria-pressed="true">Por Niveles</button>
+          <button type="button" data-v="facil" aria-pressed="false">Lento (libre)</button>
+          <button type="button" data-v="normal" aria-pressed="false">Normal (libre)</button>
+          <button type="button" data-v="dificil" aria-pressed="false">Felino (libre)</button>
+        </div>
+        <small class="help" id="diffNote"></small>
+      </div>
+
+      <div class="hint" id="hint">
+        <h4>Predicción con las fórmulas ideales</h4>
+        <p id="hWall"></p>
+        <p id="hGoal"></p>
+        <small id="hNote"></small>
+      </div>
+
+      <label class="check"><input id="inGuide" type="checkbox" checked> Mostrar trayectoria prevista</label>
+      <button class="kick" id="btnKick" type="button">Patear Balón</button>
+      <button class="ghost" id="btnPos" type="button">Cambiar posición de la falta</button>
+      
+      <details class="keys">
+        <summary>Controles de ratón y teclado</summary>
+        <ul>
+          <li>🖱️ <b>Ratón:</b> Haz clic en el balón y arrastra para apuntar. Suelta para patear.</li>
+          <li>⌨️ <b>Teclado:</b> <kbd>←</kbd> <kbd>→</kbd> dirección · <kbd>↑</kbd> <kbd>↓</kbd> ángulo</li>
+          <li>⌨️ <kbd>W</kbd> <kbd>S</kbd> velocidad · <kbd>A</kbd> <kbd>D</kbd> efecto</li>
+          <li>⌨️ <kbd>Espacio</kbd> patear · <kbd>M</kbd> sonido</li>
+        </ul>
+      </details>
+    </aside>
+  </div>
+
+  <!-- ================= LABORATORIO DE FÍSICA ================= -->
+  <section class="lab" aria-label="Laboratorio de física">
+    <div>
+      <h3>Vista lateral: altura contra distancia</h3>
+      <p class="note">Eje horizontal: distancia recorrida hacia el arco (m). Eje vertical: altura alcanzada (m).</p>
+      <canvas id="graph" role="img" aria-label="Gráfica de la trayectoria: altura contra distancia"></canvas>
+      <div class="legend">
+        <span><i class="sw dash"></i>Trayectoria prevista</span>
+        <span><i class="sw"></i>Tiro real ejecutado</span>
+        <span><i class="sw bar"></i>Barrera y arco</span>
+      </div>
+      <div class="live" aria-live="off">
+        <div><small>Tiempo</small><b id="lT">0,00 s</b></div>
+        <div><small>Distancia</small><b id="lX">0,0 m</b></div>
+        <div><small>Altura</small><b id="lY">0,00 m</b></div>
+        <div><small>Rapidez</small><b id="lV">0 km/h</b></div>
+      </div>
+    </div>
+    <div>
+      <h3>Las cuentas del tiro (modelo ideal)</h3>
+      <div class="glossary">
+        <div><small><i>θ</i> ángulo</small><b id="gTh"></b></div>
+        <div><small><i>v₀</i> velocidad</small><b id="gV0"></b></div>
+        <div><small><i>g</i> gravedad</small><b id="gG"></b></div>
+        <div><small><i>L</i> al arco</small><b id="gL"></b></div>
+      </div>
+      <table>
+        <tr><td>Velocidad horizontal<i>vₓ = v₀ · cos θ</i></td><td id="fVx"></td></tr>
+        <tr><td>Velocidad vertical<i>v_y = v₀ · sen θ</i></td><td id="fVy"></td></tr>
+        <tr><td>Altura máxima<i>h = v_y² / (2g)</i></td><td id="fH"></td></tr>
+        <tr><td>Tiempo de vuelo<i>t = 2 · v_y / g</i></td><td id="fT"></td></tr>
+        <tr><td>Alcance teórico<i>R = v₀² · sen(2θ) / g</i></td><td id="fR"></td></tr>
+        <tr><td>Altura al pasar la barrera<i>y(9,15 m) en el modelo ideal</i></td><td id="fYW"></td></tr>
+        <tr><td>Altura al llegar al arco<i>y = L·tan θ − g·L² / (2·v₀²·cos² θ)</i></td><td id="fYL"></td></tr>
+      </table>
+      <p class="note"><span id="verdict"></span> El travesaño está a 2,44 m y la barrera (a 9,15 m) mide 1,85 m y salta. El modelo ideal no cuenta el aire ni el efecto Magnus; el juego sí los calcula paso a paso.</p>
+    </div>
+  </section>
+
+  <!-- ================= INFORME PERMANENTE DEL ÚLTIMO DISPARO ================= -->
+  <section class="diag-lab-panel" id="diagLabSection" aria-label="Informe de física del tiro">
+    <div class="diag-lab-header">
+      <h3 style="font-size:16px;color:var(--chalk);margin:0;display:flex;align-items:center"><span class="n" style="display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--flood);color:#16130a;font-size:14px;margin-right:8px;font-weight:800">🔬</span>Informe Físico del Último Disparo (Para la Feria de Ciencias)</h3>
+      <span class="diag-badge" id="dLabBadge">Esperando primer remate</span>
+    </div>
+    <div class="diag-lab-grid">
+      <div class="diag-lab-card">
+        <h4>⚡ Balance de Fuerzas y Aceleraciones</h4>
+        <table class="diag-mini-table">
+          <tr><td>Fuerza Gravitatoria (Peso)</td><td id="labFg">–</td></tr>
+          <tr><td>Fuerza de Arrastre Aerodinámico</td><td id="labFd">–</td></tr>
+          <tr><td>Fuerza Magnus Lateral</td><td id="labFm">–</td></tr>
+          <tr><td>Aceleración vertical neta inicial (a_y)</td><td id="labAy">–</td></tr>
+          <tr><td>Aceleración lateral neta inicial (a_z)</td><td id="labAz">–</td></tr>
+        </table>
+      </div>
+      <div class="diag-lab-card">
+        <h4>📊 Comparativa: Modelo Ideal vs Tiro Real</h4>
+        <table class="diag-mini-table">
+          <tr><td>Alcance máximo hacia el arco</td><td id="labAlcance">–</td></tr>
+          <tr><td>Altura máxima alcanzada (h_máx)</td><td id="labHmax">–</td></tr>
+          <tr><td>Altura al pasar la barrera (9,15 m)</td><td id="labWallH">–</td></tr>
+          <tr><td>Altura en la línea del arco</td><td id="labGoalH">–</td></tr>
+          <tr><td>Tiempo de vuelo registrado</td><td id="labTime">–</td></tr>
+        </table>
+      </div>
+      <div class="diag-lab-card col-wide">
+        <h4>🎓 Guía de Argumentación para el Expositor de la Feria</h4>
+        <div id="labSpeechText" class="lab-speech">
+          Realiza un remate para ver los argumentos físicos clave que puedes exponer al profesor y jurado de la feria sobre la gravedad, la resistencia del aire y el efecto Magnus.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>Proyecto de aula · Feria de Física · Movimiento Parabólico & Efecto Magnus</footer>
+</div>
+
+<!-- ================= MODAL INICIAR RETO FERIA ================= -->
+<div class="modal-overlay" id="modalReto" hidden>
+  <div class="modal-card">
+    <h3>🏆 Modo Reto para la Feria</h3>
+    <p>¡Compite como en la feria de física! Tienes <b>5 tiros libres</b> para sumar el mayor puntaje posible:</p>
+    <ul style="margin:0;padding-left:20px;font-size:14.5px;color:var(--muted)">
+      <li><b>+100 puntos</b> por cada gol.</li>
+      <li><b>+50 puntos extra</b> si anotas con efecto (|comba| ≥ 25%).</li>
+      <li><b>+50 puntos extra</b> si anotas desde más de 25 metros de distancia.</li>
+    </ul>
+    <div>
+      <label for="inRetoName" style="display:block;font-weight:700;margin-bottom:6px;font-family:var(--data);text-transform:uppercase;color:var(--flood)">Nombre del participante:</label>
+      <input type="text" id="inRetoName" placeholder="Escribe tu nombre o apodo..." maxlength="20">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sec" id="btnCancelReto" type="button">Cancelar</button>
+      <button class="btn-primary" id="btnStartReto" type="button">Comenzar Reto</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL LEADERBOARD (TOP 10) ================= -->
+<div class="modal-overlay" id="modalLeaderboard" hidden>
+  <div class="modal-card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3>🎖️ Tabla de los 10 Mejores</h3>
+      <button class="btn-sm" id="btnClearBoard" type="button" style="color:var(--miss)">Borrar Tabla</button>
+    </div>
+    <p id="boardNotice">Los mejores puntajes registrados en esta computadora durante la feria:</p>
+    <div style="max-height:260px;overflow-y:auto">
+      <table class="rank-table">
+        <thead>
+          <tr>
+            <th>Pos</th>
+            <th>Participante</th>
+            <th>Goles</th>
+            <th>Puntaje</th>
+          </tr>
+        </thead>
+        <tbody id="boardBody">
+          <!-- Generado dinámicamente -->
+        </tbody>
+      </table>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" id="btnCloseBoard" type="button">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+/* =====================================================================
+   1. UTILIDADES Y REFERENCIAS
+   ===================================================================== */
+const $=id=>document.getElementById(id);
+const fmt=(n,d=1)=>n.toFixed(d).replace('.',',');      // números con coma decimal
+const cv=$('game'),ctx=cv.getContext('2d');             // lienzo del estadio
+const gv=$('graph'),gx=gv.getContext('2d');              // lienzo de la gráfica lateral
+
+/* =====================================================================
+   2. MEDIDAS REALES (metros, segundos, m/s)
+   ===================================================================== */
+const R=0.11;       // radio del balón
+const GW=3.66;      // medio ancho del arco (7,32 m / 2)
+const GH=2.44;      // altura del travesaño
+const WALLU=9.15;   // distancia de la barrera al balón
+const WALLH=1.85;   // altura de la barrera
+/* g = gravedad (m/s²), rho = densidad del aire (kg/m³) */
+const PLACES={
+  tierra:{n:'Tierra',g:9.81,rho:1.2},
+  vacio:{n:'Tierra sin aire',g:9.81,rho:0},
+  marte:{n:'Marte',g:3.71,rho:0.02},
+  luna:{n:'Luna',g:1.62,rho:0}
+};
+const PLACE_NOTES={
+  tierra:'Gravedad normal y con aire: el aire frena el balón y permite el efecto Magnus.',
+  vacio:'Misma gravedad, pero sin aire: parábola perfecta, sin frenado ni efecto.',
+  marte:'Gravedad 2,6 veces menor y aire muy delgado: el balón vuela mucho más.',
+  luna:'Gravedad 6 veces menor y sin aire: tiros altísimos y lentos.'
+};
+/* Arquero: [tiempo de reacción (s), rapidez con la que se lanza (m/s)] */
+const DIFF={facil:[0.55,2.2],normal:[0.38,3.0],dificil:[0.28,3.8]};
+
+/* =====================================================================
+   3. ESTADO DEL JUEGO Y MODO RETO FERIA
+   ===================================================================== */
+let place='tierra',diff='prog';
+let level=1;                                  // Nivel actual
+let W=1280,H=720,q=1,f=1600,hz=300;           // tamaño del lienzo, escala, focal, horizonte
+let x0=-2,D=19,L,yaw,su,cu,C,wallW0,wallN,k0; // falta, cámara, barrera y arquero
+let state='aim',ball,trail=[],shotT=0,result=null,resT=0,cross=null,celebrate=0,time=0,lastGraph=null,apex=0;
+let pitando=false;
+const stats={g:0,s:0,k:0,b:0};
+try{stats.b=+localStorage.getItem('tl_best')||0}catch(e){}
+
+/* Estado del Modo Reto Feria */
+const retoState={
+  active:false,
+  name:'',
+  shotsLeft:5,
+  points:0,
+  goals:0
+};
+
+/* Leaderboard guardado en localStorage */
+let leaderboard=[];
+try{
+  const saved=localStorage.getItem('tl_leaderboard');
+  if(saved)leaderboard=JSON.parse(saved);
+}catch(e){leaderboard=[]}
+
+/* Estado del mouse/touch drag para apuntar */
+const mouseAim={
+  active:false,
+  startX:0,
+  startY:0,
+  curX:0,
+  curY:0,
+  initAngle:20,
+  initSpeed:22,
+  initDir:0,
+  initSpin:0
+};
+
+/* Obtener parámetros del arquero según nivel o modo libre */
+function getKeeperParams(){
+  if(diff!=='prog')return DIFF[diff];
+  const reac=Math.max(0.24,0.55-(level-1)*0.07);
+  const vel=Math.min(4.2,2.2+(level-1)*0.45);
+  return [reac,vel];
+}
+
+/* =====================================================================
+   4. ESCENA Y CÁMARA
+   ===================================================================== */
+function setup(){
+  L=Math.hypot(x0,D);yaw=Math.atan2(-x0,D);su=Math.sin(yaw);cu=Math.cos(yaw);
+  C=[x0-su*9,1.6,-cu*9];                          // cámara 9 m detrás y a 1,6 m de altura
+  const tx=x0<-1?-1.7:x0>1?1.7:-1.5;              // palo que tapa la barrera
+  const tu=(tx-x0)*su+D*cu,tw=(tx-x0)*cu-D*su;
+  wallW0=WALLU*tw/tu;
+  if(diff==='prog'){
+    wallN=Math.min(6,3+(level-1));
+  } else {
+    wallN=L<21?5:4;
+  }
+  k0=-tx*0.45;
+  $('cDist').textContent=fmt(L)+' m';
+}
+function wpos(u,w,y){return[x0+su*u+cu*w,y,cu*u-su*w]}
+function uw(p){const dx=p[0]-x0,dz=p[2];return[dx*su+dz*cu,dx*cu-dz*su]}
+function cam(p){const dx=p[0]-C[0],dz=p[2]-C[2];return[dx*cu-dz*su,p[1]-C[1],dx*su+dz*cu]}
+function proj(p){const c=cam(p);if(c[2]<0.5)return null;const s=f/c[2];return[W/2+c[0]*s,hz-c[1]*s,s]}
+function poly(pts,fill){
+  let a=pts.map(cam),o=[];
+  for(let i=0;i<a.length;i++){const p=a[i],n=a[(i+1)%a.length],ip=p[2]>=0.5,inn=n[2]>=0.5;
+    if(ip)o.push(p);
+    if(ip!==inn){const t=(0.5-p[2])/(n[2]-p[2]);o.push([p[0]+(n[0]-p[0])*t,p[1]+(n[1]-p[1])*t,0.5])}}
+  if(o.length<3)return;
+  ctx.beginPath();o.forEach((c,i)=>{const s=f/c[2],X=W/2+c[0]*s,Y=hz-c[1]*s;i?ctx.lineTo(X,Y):ctx.moveTo(X,Y)});
+  ctx.closePath();ctx.fillStyle=fill;ctx.fill();
+}
+function gline(x1,z1,x2,z2,w){w=w||0.13;const dx=x2-x1,dz=z2-z1,l=Math.hypot(dx,dz)||1,nx=-dz/l*w/2,nz=dx/l*w/2;
+  poly([[x1+nx,0,z1+nz],[x2+nx,0,z2+nz],[x2-nx,0,z2-nz],[x1-nx,0,z1-nz]],'rgba(255,255,255,.82)')}
+function seg3(a,b){const p=proj(a),r=proj(b);if(!p||!r)return;ctx.moveTo(p[0],p[1]);ctx.lineTo(r[0],r[1])}
+
+/* =====================================================================
+   5. FÍSICA REAL (INALTERADA)
+   ===================================================================== */
+function env(){const P=PLACES[place],k=0.0133*P.rho/1.2;return{g:P.g,k:k,cm:k*(+$('inSpin').value/100)}}
+function initVel(){const e=+$('inAngle').value*Math.PI/180,h=yaw+(+$('inDir').value)*Math.PI/180,v=+$('inSpeed').value;
+  return[v*Math.cos(e)*Math.sin(h),v*Math.sin(e),v*Math.cos(e)*Math.cos(h)]}
+function step(b,dt,E){
+  const v=Math.hypot(b.v[0],b.v[1],b.v[2]);
+  const ax=-E.k*v*b.v[0]+E.cm*v*b.v[2],ay=-E.g-E.k*v*b.v[1],az=-E.k*v*b.v[2]-E.cm*v*b.v[0];
+  b.v[0]+=ax*dt;b.v[1]+=ay*dt;b.v[2]+=az*dt;
+  b.p[0]+=b.v[0]*dt;b.p[1]+=b.v[1]*dt;b.p[2]+=b.v[2]*dt;
+}
+function wallJump(t){return Math.max(0,2.9*t-4.9*t*t)}
+function inWall(w,y,t){return Math.abs(w-wallW0)<wallN*0.3+R&&y<WALLH+wallJump(t)+R*0.5}
+function predict(){
+  const E=env(),b={p:[x0,R,0],v:initVel()},pts=[],dt=1/240;let t=0,cr=null,stop=false,passed=false,hmax=R;
+  for(let i=0;i<1700&&!stop;i++){
+    const pz=b.p[2],px=b.p[0],py=b.p[1],pu=uw(b.p)[0];
+    step(b,dt,E);t+=dt;hmax=Math.max(hmax,b.p[1]);
+    const c=uw(b.p);
+    if(!passed&&pu<WALLU&&c[0]>=WALLU){passed=true;if(inWall(c[1],b.p[1],0.35))stop=true}
+    if(pz<D&&b.p[2]>=D){const k=(D-pz)/(b.p[2]-pz);cr={x:px+(b.p[0]-px)*k,y:py+(b.p[1]-py)*k,t:t};stop=true}
+    if(b.p[1]<R){b.p[1]=R;stop=true}
+    if(i%6===0||stop)pts.push({p:b.p.slice(),u:c[0],y:b.p[1]-R});
+  }
+  return{pts:pts,cross:cr,hmax:hmax-R};
+}
+function keeperX(t){const d=getKeeperParams();if(!cross||t<d[0])return k0;const tg=Math.max(-3.3,Math.min(3.3,cross.x)),dx=tg-k0;
+  return k0+Math.sign(dx)*Math.min(Math.abs(dx),d[1]*(t-d[0]))}
+
+/* =====================================================================
+   6. SONIDO (WEB AUDIO API - SIN EXTERNOS)
+   ===================================================================== */
+const Sonido=(function(){
+  let ac=null,master=null,noise=null,muted=false;
+  const VOL=0.8;
+  try{muted=localStorage.getItem('tl_mute')==='1'}catch(e){}
+  function init(){
+    if(ac){if(ac.state==='suspended')ac.resume();return}
+    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+    try{ac=new AC()}catch(e){ac=null;return}
+    master=ac.createGain();master.gain.value=muted?0:VOL;master.connect(ac.destination);
+    noise=ac.createBuffer(1,ac.sampleRate*2,ac.sampleRate);
+    const d=noise.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+    murmullo();
+  }
+  function ruido(){const s=ac.createBufferSource();s.buffer=noise;return s}
+  function envolvente(g,t,a,pico,dec){g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(pico,t+a);g.gain.exponentialRampToValueAtTime(0.0001,t+a+dec)}
+  function murmullo(){
+    const s=ruido();s.loop=true;
+    const bp=ac.createBiquadFilter();bp.type='bandpass';bp.frequency.value=450;bp.Q.value=0.7;
+    const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1200;
+    const g=ac.createGain();g.gain.value=0.25;
+    const lfo=ac.createOscillator(),lg=ac.createGain();lfo.frequency.value=0.18;lg.gain.value=0.08;
+    lfo.connect(lg);lg.connect(g.gain);
+    s.connect(bp);bp.connect(lp);lp.connect(g);g.connect(master);s.start();lfo.start();
+  }
+  function patada(){if(!ac)return;const t=ac.currentTime;
+    const o=ac.createOscillator(),g=ac.createGain();o.type='sine';
+    o.frequency.setValueAtTime(160,t);o.frequency.exponentialRampToValueAtTime(45,t+0.15);
+    envolvente(g,t,0.004,0.7,0.18);o.connect(g);g.connect(master);o.start(t);o.stop(t+0.25);
+    const n=ruido(),bp=ac.createBiquadFilter(),ng=ac.createGain();bp.type='bandpass';bp.frequency.value=1800;
+    envolvente(ng,t,0.002,0.5,0.05);n.connect(bp);bp.connect(ng);ng.connect(master);n.start(t);n.stop(t+0.1);
+  }
+  function pito(){if(!ac)return;const t=ac.currentTime,dur=0.42;
+    const o=ac.createOscillator(),g=ac.createGain(),lfo=ac.createOscillator(),lg=ac.createGain();
+    o.type='sine';o.frequency.value=2900;lfo.type='square';lfo.frequency.value=28;lg.gain.value=110;
+    lfo.connect(lg);lg.connect(o.frequency);
+    g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.18,t+0.02);
+    g.gain.setValueAtTime(0.18,t+dur-0.06);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.connect(g);g.connect(master);o.start(t);lfo.start(t);o.stop(t+dur+0.02);lfo.stop(t+dur+0.02);
+  }
+  function golpe(fuerza){if(!ac)return;fuerza=fuerza||1;const t=ac.currentTime;
+    const n=ruido(),lp=ac.createBiquadFilter(),g=ac.createGain();lp.type='lowpass';lp.frequency.value=600;
+    envolvente(g,t,0.003,0.9*fuerza,0.12);n.connect(lp);lp.connect(g);g.connect(master);n.start(t);n.stop(t+0.2);
+    const o=ac.createOscillator(),og=ac.createGain();o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(60,t+0.1);
+    envolvente(og,t,0.003,0.5*fuerza,0.12);o.connect(og);og.connect(master);o.start(t);o.stop(t+0.2);
+  }
+  function palo(){if(!ac)return;golpe(0.9);const t=ac.currentTime;
+    [[620,0.5],[1480,0.35],[2350,0.25]].forEach(function(p){
+      const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=p[0];
+      envolvente(g,t,0.002,0.15,p[1]);o.connect(g);g.connect(master);o.start(t);o.stop(t+p[1]+0.05)});
+  }
+  function gol(){if(!ac)return;const t=ac.currentTime,fin=t+3.6;
+    const sube=function(g,pk){g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(pk,t+0.7);g.gain.setValueAtTime(pk,t+1.5);g.gain.exponentialRampToValueAtTime(0.0001,fin)};
+    const n=ruido();n.loop=true;
+    const bp=ac.createBiquadFilter();bp.type='bandpass';bp.Q.value=0.6;
+    bp.frequency.setValueAtTime(450,t);bp.frequency.linearRampToValueAtTime(950,t+0.8);
+    const g=ac.createGain();sube(g,1);n.connect(bp);bp.connect(g);g.connect(master);n.start(t);n.stop(fin+0.05);
+    const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1000;
+    const vg=ac.createGain();sube(vg,0.22);lp.connect(vg);vg.connect(master);
+    for(let i=0;i<7;i++){const o=ac.createOscillator(),og=ac.createGain(),f0=170+Math.random()*160;o.type='sawtooth';
+      o.frequency.setValueAtTime(f0*0.85,t);o.frequency.linearRampToValueAtTime(f0,t+0.6);o.frequency.linearRampToValueAtTime(f0*0.92,fin);
+      og.gain.value=0.12;o.connect(og);og.connect(lp);o.start(t);o.stop(fin+0.05)}
+  }
+  function setMuted(m){muted=m;try{localStorage.setItem('tl_mute',m?'1':'0')}catch(e){}
+    if(ac)master.gain.setTargetAtTime(m?0:VOL,ac.currentTime,0.05)}
+  document.addEventListener('visibilitychange',function(){if(ac)document.hidden?ac.suspend():ac.resume()});
+  return{init:init,patada:patada,pito:pito,golpe:golpe,palo:palo,gol:gol,setMuted:setMuted,
+    isMuted:function(){return muted},activo:function(){return !!ac&&!muted}};
+})();
+
+/* =====================================================================
+   7. FLUJO DEL TIRO Y MODO RETO FERIA
+   ===================================================================== */
+function kick(){
+  if(state!=='aim'||pitando)return;
+  Sonido.init();
+  if(Sonido.activo()){
+    pitando=true;$('btnKick').disabled=true;$('btnPos').disabled=true;
+    Sonido.pito();setTimeout(launch,480);
+  }else launch();
+}
+function launch(){
+  pitando=false;
+  cross=predict().cross;ball={p:[x0,R,0],v:initVel(),passed:false,net:false};
+  trail=[];lastGraph=[{u:0,y:0}];apex=0;shotT=0;result=null;state='fly';stats.s++;
+  $('btnKick').disabled=true;$('btnPos').disabled=true;$('banner').hidden=true;paintScore();
+  Sonido.patada();
+}
+function showLevelBanner(lvl){
+  const el=$('lvlBanner');if(!el)return;
+  el.textContent='¡NIVEL '+lvl+'!';
+  el.hidden=false;
+  setTimeout(()=>{el.hidden=true},2500);
+}
+
+function processRetoShot(isGoal){
+  if(!retoState.active)return;
+  retoState.shotsLeft--;
+  if(isGoal){
+    retoState.goals++;
+    let pts=100;
+    const spin=Math.abs(+$('inSpin').value);
+    if(spin>=25)pts+=50; // bono por efecto
+    if(L>=25)pts+=50;    // bono por distancia larga
+    retoState.points+=pts;
+  }
+  updateRetoUI();
+  if(retoState.shotsLeft<=0){
+    // Fin del reto
+    setTimeout(finishReto,1800);
+  }
+}
+
+function updateRetoUI(){
+  $('rUser').textContent=retoState.name||'Anónimo';
+  $('rShotsLeft').textContent=retoState.shotsLeft;
+  $('rPoints').textContent=retoState.points;
+}
+
+function finishReto(){
+  saveScoreToLeaderboard(retoState.name,retoState.points,retoState.goals);
+  alertRetoFinal(retoState.name,retoState.points,retoState.goals);
+  retoState.active=false;
+  $('retoBar').hidden=true;
+  $('btnRetoMode').classList.remove('active');
+  $('retoBtnTxt').textContent='Modo Reto';
+}
+
+function updatePhysicsDiagnostic(r, text, extra){
+  extra = extra || {};
+  const P = PLACES[place];
+  const g = P.g;
+  const rho = P.rho;
+  const a = +$('inAngle').value;
+  const v0 = +$('inSpeed').value;
+  const dir = +$('inDir').value;
+  const spin = +$('inSpin').value;
+  const m = 0.43; // Balón FIFA tamaño 5 (430 gramos)
+  
+  // 1. Balance de Fuerzas
+  const Fg = m * g;
+  const k = 0.0133 * (rho / 1.2);
+  const Fd = m * k * v0 * v0;
+  const cm = k * (spin / 100);
+  const FM = m * Math.abs(cm) * v0 * v0;
+  
+  const fgPct = Math.min(100, Math.round((Fg / 7) * 100));
+  const fdPct = Math.min(100, Math.round((Fd / 7) * 100));
+  const fmPct = Math.min(100, Math.round((FM / 7) * 100));
+  
+  $('dFg').textContent = fmt(Fg, 2) + ' N';
+  $('dFd').textContent = fmt(Fd, 2) + ' N';
+  $('dFm').textContent = fmt(FM, 2) + ' N';
+  $('dFgBar').style.width = fgPct + '%';
+  $('dFdBar').style.width = fdPct + '%';
+  $('dFmBar').style.width = fmPct + '%';
+  
+  // Variables teóricas ideales
+  const rad = a * Math.PI / 180;
+  const vxTeo = v0 * Math.cos(rad);
+  const vyTeo = v0 * Math.sin(rad);
+  const hmaxTeo = (vyTeo * vyTeo) / (2 * g);
+  const tVueloTeo = (2 * vyTeo) / g;
+  const rTeo = (v0 * v0 * Math.sin(2 * rad)) / g;
+  const yWallTeo = WALLU * Math.tan(rad) - (g * WALLU * WALLU) / (2 * vxTeo * vxTeo);
+  const yGoalTeo = L * Math.tan(rad) - (g * L * L) / (2 * vxTeo * vxTeo);
+  
+  const card = $('diagCard');
+  const badgeEl = $('dBadge');
+  
+  card.className = 'diag-card';
+  badgeEl.className = 'diag-badge';
+  
+  let badgeTxt = '', quePaso = '', queMejorar = '', speech = '';
+  const formulas = [];
+  
+  if(r === 'goal'){
+    card.classList.add('good');
+    badgeEl.classList.add('good');
+    badgeTxt = '⚽ ¡GOLAZO! FÍSICA PERFECTA';
+    quePaso = `¡Tiro impecable! El balón superó la barrera (altura registrada: ${fmt(extra.wallY||1.95, 2)} m > 1,85 m), ingresó bajo el travesaño a ${fmt(extra.goalY||1.6, 2)} m de altura y cruzó a ${fmt((extra.speedFinal||v0)*3.6, 0)} km/h en ${fmt(extra.shotT||0.9, 2)} s. La fuerza y el efecto dejaron sin opción al arquero.`;
+    queMejorar = `¡Gran remate! Tu combinación de elevación θ = ${fmt(a)}° y velocidad v₀ = ${fmt(v0)} m/s fue óptima. Para poner a prueba tus conocimientos en la feria, intenta anotar desde más lejos o activa la gravedad de Marte.`;
+    speech = `<b>Cómo explicar este gol al jurado:</b> "En este tiro logré el balance exacto entre tres fuerzas: el peso (Fg = ${fmt(Fg,2)} N) permitió que el balón bajara a tiempo bajo los 2,44 m del travesaño; la resistencia del aire (Fd = ${fmt(Fd,2)} N) estabilizó la caída y el efecto Magnus (FM = ${fmt(FM,2)} N) le dio comba lateral engañando la trayectoria del arquero."`;
+    
+    formulas.push({
+      t: 'Ecuación de la parábola y(x)',
+      f: `y(L) = L·tan(θ) - [g·L² / (2·v₀²·cos²θ)]`,
+      val: `y(${fmt(L,1)}) = ${fmt(Math.max(0, extra.goalY||1.6), 2)} m (< 2,44 m)`,
+      note: 'El balón entró bajo los 2,44 m del travesaño.'
+    });
+    formulas.push({
+      t: 'Velocidad de impacto',
+      f: `v = √(v_x² + v_y² + v_z²)`,
+      val: `${fmt((extra.speedFinal||v0)*3.6, 0)} km/h (${fmt(extra.speedFinal||v0, 1)} m/s)`,
+      note: `Tiempo de vuelo hasta la red: ${fmt(extra.shotT||0.9, 2)} s.`
+    });
+    formulas.push({
+      t: 'Efecto Magnus y Bernoulli',
+      f: `F_M = S₀ · (ω × v)`,
+      val: `F_M = ${fmt(FM, 2)} N (efecto ${spin}%)`,
+      note: 'Diferencia de presión lateral que curvó el balón hacia el ángulo.'
+    });
+  } else if(r === 'wall'){
+    card.classList.add('bad');
+    badgeEl.classList.add('bad');
+    badgeTxt = '🛑 BLOQUEADO POR LA BARRERA';
+    const wHeight = 1.85 + (extra.wallJump||0);
+    quePaso = `El balón impactó la barrera defensiva a 9,15 m de distancia. Al cruzar esa distancia, la altura del balón era de ${fmt(extra.wallY||1.2, 2)} m, pero los defensores miden 1,85 m (y con el salto llegaron a ${fmt(wHeight, 2)} m). La gravedad (${fmt(Fg,2)} N) no permitió que la velocidad vertical v₀y = ${fmt(vyTeo,1)} m/s elevara el balón lo suficiente.`;
+    queMejorar = `1. Sube el ángulo de elevación a ${Math.min(36, Math.round(a + 4))}° para que el balón alcance más de 2,20 m a los 9,15 m.\n2. O aplica comba Magnus hacia la derecha (+40% a +60%) apuntando abierto para rodear la barrera por el lateral exterior.`;
+    speech = `<b>Cómo explicar este fallo al jurado:</b> "El tiro falló porque a 9,15 m de distancia, la energía cinética vertical inicial no fue suficiente para superar la altura h = 1,85 m de la barrera. Según la ecuación de trayectoria, a mayor ángulo θ o mayor velocidad v₀, la altura y(9,15 m) sube exponencialmente."`;
+    
+    formulas.push({
+      t: 'Altura en la barrera y(9,15)',
+      f: `y(x) = x·tan(θ) - [g·x² / (2·v₀²·cos²θ)]`,
+      val: `y(9,15) = ${fmt(extra.wallY||1.2, 2)} m (< 1,85 m)`,
+      note: 'Faltaron ' + fmt(Math.max(0.1, 1.85 - (extra.wallY||1.2)), 2) + ' m para superar la barrera.'
+    });
+    formulas.push({
+      t: 'Velocidad vertical inicial',
+      f: `v_0y = v₀ · sen(θ)`,
+      val: `v_0y = ${fmt(vyTeo, 1)} m/s`,
+      note: 'Aumentar θ incrementa v_0y y la altura inicial.'
+    });
+    formulas.push({
+      t: 'Condición de salto defensivo',
+      f: `y_barrera = 1,85 m + y_salto(t)`,
+      val: `Altura a superar = ${fmt(wHeight, 2)} m`,
+      note: 'La barrera salta hasta 40 cm al escuchar el remate.'
+    });
+  } else if(r === 'save'){
+    card.classList.add('warn');
+    badgeEl.classList.add('warn');
+    badgeTxt = '🧤 ATAJADA DEL ARQUERO';
+    quePaso = `El arquero atajó el disparo a los ${fmt(extra.shotT||1.1, 2)} s. Su tiempo de reacción es de ${fmt((extra.keeperReaction||[0.38])[0], 2)} s y su velocidad de salto es de ${fmt((extra.keeperReaction||[0,3.0])[1], 1)} m/s. Como el tiro fue a solo ${fmt(extra.keeperGap||0.6, 2)} m de su posición, tuvo tiempo suficiente para estirarse y desviar el balón.`;
+    queMejorar = `1. Aumenta la velocidad a ${Math.min(35, Math.round(v0 + 3))} m/s: mayor velocidad horizontal reduce el tiempo de vuelo (t = L / vₓ) a menos de 0,85 s, superando el tiempo de reacción del arquero.\n2. Apunta más hacia las esquinas superiores (ángulos a ±3,2 m del centro), lejos del portero.`;
+    speech = `<b>Cómo explicar esta atajada al jurado:</b> "En física deportiva, el tiempo de vuelo t = L / (v₀·cos θ) compite contra el tiempo de reacción humano (≈0,35 s) más el tiempo cinemático de desplazamiento del arquero d / v_arq. Con velocidad baja o tiro centrado, el portero siempre llega."`;
+    
+    formulas.push({
+      t: 'Tiempo de vuelo hacia la meta',
+      f: `t_vuelo = L / (v₀ · cos θ · cos φ)`,
+      val: `t = ${fmt(extra.shotT||1.1, 2)} s`,
+      note: 'Más velocidad v₀ reduce el tiempo de vuelo.'
+    });
+    formulas.push({
+      t: 'Cinemática del arquero',
+      f: `d_alcance = v_arq · (t_vuelo - t_reac)`,
+      val: `d_alcance = ${fmt(Math.min(3.5, ((extra.keeperReaction||[0,3])[1]) * Math.max(0, (extra.shotT||1.1) - ((extra.keeperReaction||[0.38])[0]))), 2)} m`,
+      note: 'Distancia que el portero pudo recorrer para atajar.'
+    });
+    formulas.push({
+      t: 'Fuerza de arrastre F_d',
+      f: `F_d = ½ C_d · ρ · A · v²`,
+      val: `F_d = ${fmt(Fd, 2)} N`,
+      note: 'El frenado del aire le da más décimas de segundo al arquero.'
+    });
+  } else if(r === 'post'){
+    card.classList.add('warn');
+    badgeEl.classList.add('warn');
+    badgeTxt = '💥 ¡AL PALO! POR CENTÍMETROS';
+    quePaso = `¡Impacto directo en el marco! El balón cruzó a ${fmt(extra.goalY||2.44, 2)} m de altura y a ${fmt(Math.abs(extra.goalX||3.66), 2)} m del centro, chocando contra el poste o travesaño. La trayectoria parabólica fue geométricamente sobresaliente pero rozó el marco reglamentario.`;
+    queMejorar = `Estuviste a milímetros del gol. Realiza un microajuste de apenas 0,5° en el ángulo de elevación (bajar un poco) o 0,5° en la dirección hacia el interior para que entre limpio al ángulo de la red.`;
+    speech = `<b>Cómo explicar este poste al jurado:</b> "El tiro cumplió todas las condiciones de la parábola para superar la barrera y vencer al arquero, pero la posición en la meta (X, Y) coincidió exactamente con el perímetro de la portería (ancho 7,32 m, alto 2,44 m). Un microajuste en las condiciones iniciales garantiza el gol."`;
+    
+    formulas.push({
+      t: 'Dimensiones del arco FIFA',
+      f: `Alto = 2,44 m | Ancho = ±3,66 m`,
+      val: `Impacto en Y = ${fmt(extra.goalY||2.44, 2)} m | X = ${fmt(Math.abs(extra.goalX||3.66), 2)} m`,
+      note: 'El travesaño mide 12 cm de grosor.'
+    });
+    formulas.push({
+      t: 'Descomposición vectorial',
+      f: `v_0x = v₀·cos(θ)·sen(φ)`,
+      val: `v_0x = ${fmt(vxTeo, 1)} m/s`,
+      note: 'Determina la posición lateral en el plano del arco.'
+    });
+    formulas.push({
+      t: 'Conservación de energía',
+      f: `E_k + E_p = cte - W_fricción`,
+      val: `Energía inicial = ½ m v₀² = ${fmt(0.5 * m * v0 * v0, 0)} J`,
+      note: 'Energía cinética transferida al poste en el impacto.'
+    });
+  } else if(r === 'short'){
+    card.classList.add('bad');
+    badgeEl.classList.add('bad');
+    badgeTxt = '📉 TIRO CORTO: CAYÓ ANTES';
+    quePaso = `La gravedad (${fmt(Fg,2)} N) aceleró el balón hacia abajo hasta que tocó el pasto a los ${fmt(extra.distReached||14, 1)} m, sin llegar a los ${fmt(L,1)} m de distancia al arco. La velocidad inicial v₀ = ${fmt(v0)} m/s o el ángulo θ = ${fmt(a)}° no proporcionaron suficiente energía cinética para completar el recorrido.`;
+    queMejorar = `Aumenta la velocidad inicial a más de ${Math.min(35, Math.max(22, Math.round(v0 + 4)))} m/s y ajusta el ángulo a 20°-24° para maximizar el alcance horizontal R = v₀²·sen(2θ)/g.`;
+    speech = `<b>Cómo explicar este tiro corto al jurado:</b> "En física, el alcance de un proyectil depende cuadráticamente de su velocidad inicial: R ∝ v₀². Si la velocidad es insuficiente, la aceleración gravitatoria agota la componente vertical de la velocidad antes de que el proyectil alcance la distancia horizontal requerida L."`;
+    
+    formulas.push({
+      t: 'Alcance horizontal ideal R',
+      f: `R = [v₀² · sen(2θ)] / g`,
+      val: `R teórico = ${fmt(rTeo, 1)} m (Distancia falta = ${fmt(L, 1)} m)`,
+      note: 'El alcance debe ser estrictamente mayor a L.'
+    });
+    formulas.push({
+      t: 'Tiempo al suelo t_suelo',
+      f: `t = 2 · v_0y / g = (2 · v₀ · sen θ) / g`,
+      val: `t = ${fmt(tVueloTeo, 2)} s`,
+      note: 'Tiempo total antes del primer bote en el césped.'
+    });
+    formulas.push({
+      t: 'Pérdida por arrastre aerodinámico',
+      f: `a_arrastre = -k · v²`,
+      val: `F_d = ${fmt(Fd, 2)} N`,
+      note: 'El aire redujo el alcance real un 15% respecto al vacío.'
+    });
+  } else {
+    // 'out'
+    card.classList.add('bad');
+    badgeEl.classList.add('bad');
+    if(extra.isHigh){
+      badgeTxt = '⬆️ TIRO ALTO: SOBRE EL TRAVESAÑO';
+      quePaso = `El balón llegó a la portería a ${fmt(extra.goalY||3.1, 2)} m de altura, superando por mucho los 2,44 m del travesaño. Con un ángulo de ${fmt(a)}° y velocidad de ${fmt(v0)} m/s, la componente vertical v₀y = ${fmt(vyTeo,1)} m/s mantuvo el balón en ascenso prolongado y la gravedad no alcanzó a descenderlo a tiempo.`;
+      queMejorar = `Disminuye el ángulo a ${Math.max(14, Math.round(a - 4))}° o reduce la velocidad a ${Math.max(16, Math.round(v0 - 2))} m/s para que la parábola caiga por debajo de los 2,44 m.`;
+      speech = `<b>Cómo explicar este tiro alto al jurado:</b> "El tiro superó el travesaño porque la energía potencial gravitatoria ganada por el balón en el vértice de la parábola fue excesiva. Para que un tiro entre al arco a distancia L, se requiere estrictamente que y(L) ≤ 2,44 m."`;
+      
+      formulas.push({
+        t: 'Altura en la meta y(L)',
+        f: `y(L) = L·tan(θ) - [g·L² / (2·v₀²·cos²θ)]`,
+        val: `y(L) = ${fmt(extra.goalY||3.1, 2)} m (> 2,44 m)`,
+        note: 'Superó el travesaño por ' + fmt(Math.max(0.1, (extra.goalY||3.1) - 2.44), 2) + ' m.'
+      });
+      formulas.push({
+        t: 'Altura máxima h_máx',
+        f: `h_máx = (v₀ · sen θ)² / (2g)`,
+        val: `h_máx = ${fmt(hmaxTeo, 2)} m`,
+        note: 'Punto más alto alcanzado por el balón.'
+      });
+      formulas.push({
+        t: 'Condición de gol por altura',
+        f: `0 < y(L) < 2,44 m`,
+        val: `Regla FIFA: 2,44 m de altura`,
+        note: 'Bajar 2° a 4° asegura el ingreso bajo los palos.'
+      });
+    } else {
+      badgeTxt = '↔️ TIRO DESVIADO: FUERA DEL POSTE';
+      const lado = (extra.goalX < 0) ? 'la izquierda' : 'la derecha';
+      quePaso = `El balón salió por ${lado} del poste (a ${fmt(Math.abs(extra.goalX||4.2), 2)} m del centro; el arco mide ±3,66 m). La dirección inicial (${fmt(dir,1)}°) sumada al desvío por la Fuerza Magnus (${spin}%) abrió la trayectoria excesivamente hacia afuera.`;
+      queMejorar = `Apunta más hacia el centro (corrige la dirección a ${fmt(dir > 0 ? dir - 3 : dir + 3, 1)}°) o reduce el efecto lateral si la comba fue demasiado pronunciada.`;
+      speech = `<b>Cómo explicar este desvío al jurado:</b> "El movimiento del proyectil en 3D combina la cinemática horizontal clásica con la fuerza hidrodinámica de Magnus perpendicular a la trayectoria. Cuando el vector de velocidad lateral inicial sumado a la aceleración de Magnus excede el ancho de la meta (±3,66 m), el balón se va afuera."`;
+      
+      formulas.push({
+        t: 'Posición lateral en meta X(L)',
+        f: `X(L) = L · tan(φ) + ½ a_magnus · t²`,
+        val: `X = ${fmt(Math.abs(extra.goalX||4.2), 2)} m (> 3,66 m)`,
+        note: `Se desvió ${fmt(Math.abs(extra.goalX||4.2) - 3.66, 2)} m por fuera del poste.`
+      });
+      formulas.push({
+        t: 'Fuerza Magnus lateral F_M',
+        f: `F_M = S₀ · (ω × v)`,
+        val: `F_M = ${fmt(FM, 2)} N`,
+        note: 'Fuerza generada por el spin del balón y el aire.'
+      });
+      formulas.push({
+        t: 'Ancho reglamentario del arco',
+        f: `Postes a ±3,66 m del centro`,
+        val: `Límites: [-3,66 m ; +3,66 m]`,
+        note: 'El balón debe cruzar dentro de este intervalo.'
+      });
+    }
+  }
+  
+  badgeEl.textContent = badgeTxt;
+  $('bTitle').textContent = badgeTxt;
+  $('bText').textContent = text;
+  $('dQuePaso').textContent = quePaso;
+  $('dQueMejorar').textContent = queMejorar;
+  
+  const fGrid = $('dFormulas');
+  fGrid.innerHTML = '';
+  formulas.forEach(f => {
+    const item = document.createElement('div');
+    item.className = 'formula-item';
+    item.innerHTML = `<b>${f.t}</b><span>${f.f}</span><span style="color:var(--flood);font-weight:700">${f.val}</span><small>${f.note}</small>`;
+    fGrid.appendChild(item);
+  });
+  
+  if($('diagLabSection')){
+    $('dLabBadge').className = 'diag-badge ' + (r === 'goal' ? 'good' : r === 'save' || r === 'post' ? 'warn' : 'bad');
+    $('dLabBadge').textContent = badgeTxt;
+    $('labFg').textContent = fmt(Fg, 2) + ' N (hacia abajo)';
+    $('labFd').textContent = fmt(Fd, 2) + ' N (frena avance)';
+    $('labFm').textContent = fmt(FM, 2) + ' N (desvío lateral)';
+    $('labAy').textContent = fmt(-g - (Fd/m)*Math.sin(rad), 2) + ' m/s²';
+    $('labAz').textContent = fmt(FM/m, 2) + ' m/s²';
+    
+    $('labAlcance').textContent = fmt(rTeo, 1) + ' m ideal · ' + (r==='short'?fmt(extra.distReached||14,1)+' m real':'> '+fmt(L,1)+' m');
+    $('labHmax').textContent = fmt(hmaxTeo, 2) + ' m ideal · ' + fmt(apex||hmaxTeo, 2) + ' m real';
+    $('labWallH').textContent = fmt(yWallTeo, 2) + ' m ideal · ' + (extra.wallY?fmt(extra.wallY,2)+' m real':'–');
+    $('labGoalH').textContent = fmt(yGoalTeo, 2) + ' m ideal · ' + (extra.goalY?fmt(extra.goalY,2)+' m real':'–');
+    $('labTime').textContent = fmt(tVueloTeo, 2) + ' s ideal · ' + fmt(extra.shotT||0, 2) + ' s real';
+    
+    $('labSpeechText').innerHTML = speech;
+  }
+}
+
+function setResult(r,text,extra){
+  if(result)return;result=r;resT=0;
+  extra = extra || {};
+  const isGoal=(r==='goal');
+  if(isGoal){
+    stats.g++;stats.k++;celebrate=1;
+    if(stats.k>stats.b){stats.b=stats.k;try{localStorage.setItem('tl_best',stats.b)}catch(e){}}
+    if(diff==='prog'&&stats.g%2===0){
+      level++;
+      showLevelBanner(level);
+    }
+  } else {
+    stats.k=0;
+  }
+  
+  if(r==='goal')Sonido.gol();else if(r==='wall')Sonido.golpe(1);else if(r==='post')Sonido.palo();else if(r==='save')Sonido.golpe(0.6);
+  
+  updatePhysicsDiagnostic(r, text, extra);
+  $('banner').hidden=false;
+  paintScore();
+
+  if(retoState.active){
+    processRetoShot(isGoal);
+  }
+}
+
+function advance(dt){
+  const E=env(),h=1/240;let n=Math.max(1,Math.round(dt/h));
+  for(let i=0;i<n;i++){
+    const b=ball,px=b.p[0],py=b.p[1],pz=b.p[2],pu=uw(b.p)[0];
+    step(b,h,E);shotT+=h;
+    const c=uw(b.p);
+    if(!result){apex=Math.max(apex,b.p[1]-R)}
+    if(!b.passed&&pu<WALLU&&c[0]>=WALLU){
+      b.passed=true;
+      b.wallY=b.p[1]-R;
+      if(inWall(c[1],b.p[1],shotT)){
+        const vu=b.v[0]*su+b.v[2]*cu;b.v[0]-=1.35*vu*su;b.v[2]-=1.35*vu*cu;b.v[1]*=0.4;
+        setResult('wall','Al llegar a la barrera (9,15 m) el balón iba a '+fmt(b.p[1]-R,2)+' m de altura. Necesita superar '+fmt(WALLH+wallJump(shotT),2)+' m: sube el ángulo o usa efecto.', {
+          wallY: b.p[1]-R,
+          wallJump: wallJump(shotT),
+          shotT: shotT
+        });
+      }}
+    if(pz<D&&b.p[2]>=D&&!b.net){
+      const k=(D-pz)/(b.p[2]-pz),X=px+(b.p[0]-px)*k,Y=py+(b.p[1]-py)*k,ax=Math.abs(X);
+      const sp=Math.hypot(b.v[0],b.v[1],b.v[2]);
+      if(ax<GW-R&&Y<GH-R){
+        const kx=keeperX(shotT),gap=Math.abs(X-kx),moved=Math.abs(kx-k0);
+        if(!result&&gap<0.95&&Y<2.5-0.28*moved){
+          b.v=[(X-kx)*3+b.v[0]*0.2,3.2,-sp*0.22];
+          setResult('save','El balón tardó '+fmt(shotT,2)+' s y el arquero llegó a tiempo. Más velocidad reduce su tiempo de reacción; apunta lejos de él.', {
+            shotT: shotT,
+            keeperGap: gap,
+            keeperReaction: getKeeperParams(),
+            goalX: X,
+            goalY: Y-R,
+            speedFinal: sp,
+            wallY: b.wallY || 0
+          });
+        }else{b.net=true;
+          if(!result)setResult('goal','Cruzó la línea a '+fmt(Y-R,2)+' m de altura y '+fmt(sp*3.6,0)+' km/h, '+fmt(shotT,2)+' s después del remate. Altura máxima: '+fmt(apex,2)+' m.', {
+            shotT: shotT,
+            goalX: X,
+            goalY: Y-R,
+            speedFinal: sp,
+            apex: apex,
+            wallY: b.wallY || 0
+          });}
+      }else if(ax<GW+0.13&&Y<GH+0.13){
+        b.p[2]=D-0.02;b.v[2]*=-0.5;b.v[0]+=(ax>GW-R?Math.sign(X)*4:0);if(Y>=GH-R)b.v[1]=Math.abs(b.v[1])*0.5+2;
+        setResult('post','Pegó en el marco, a '+fmt(Y-R,2)+' m de altura y '+fmt(ax,2)+' m del centro. ¡Por centímetros!', {
+          shotT: shotT,
+          goalX: X,
+          goalY: Y-R,
+          speedFinal: sp,
+          apex: apex,
+          wallY: b.wallY || 0
+        });
+      }else if(!result){
+        if(Y>=GH)setResult('out','Pasó a '+fmt(Y-R,2)+' m de altura y el travesaño está a 2,44 m. Baja el ángulo o la velocidad.', {
+          shotT: shotT,
+          goalX: X,
+          goalY: Y-R,
+          isHigh: true,
+          speedFinal: sp,
+          apex: apex,
+          wallY: b.wallY || 0
+        });
+        else setResult('out','Se fue '+fmt(ax-GW,2)+' m por fuera del poste. Corrige la dirección o la comba.', {
+          shotT: shotT,
+          goalX: X,
+          goalY: Y-R,
+          isHigh: false,
+          speedFinal: sp,
+          apex: apex,
+          wallY: b.wallY || 0
+        });
+      }
+    }
+    if(b.net){b.v[0]*=0.97;b.v[2]*=0.955;if(b.p[2]>D+1.85){b.p[2]=D+1.85;b.v[2]=0}
+      if(Math.abs(b.p[0])>GW-0.15){b.p[0]=Math.sign(b.p[0])*(GW-0.15);b.v[0]=0}
+      if(b.p[1]>GH-0.15){b.p[1]=GH-0.15;b.v[1]=0}}
+    else if(b.p[2]>D+4.8){b.p[2]=D+4.8;b.v[2]*=-0.3}
+    if(b.p[1]<R){b.p[1]=R;b.v[1]=Math.abs(b.v[1])*0.55;b.v[0]*=0.86;b.v[2]*=0.86;if(b.v[1]<0.6)b.v[1]=0}
+    if(!result&&(shotT>7||(Math.hypot(b.v[0],b.v[2])<1.2&&b.p[1]<=R+0.01)))
+      setResult('short','La gravedad lo bajó antes de llegar: recorrió '+fmt(c[0])+' de '+fmt(L)+' m. Dale más velocidad o elevación.', {
+        shotT: shotT,
+        distReached: c[0],
+        apex: apex,
+        wallY: b.wallY || 0
+      });
+    if(!result&&i%4===0)lastGraph.push({u:c[0],y:b.p[1]-R});
+  }
+  trail.push(ball.p.slice());if(trail.length>26)trail.shift();
+  if(result){
+    resT+=dt;
+    const pauseExplain = $('chkPauseExplain') ? $('chkPauseExplain').checked : true;
+    if(!pauseExplain && resT>5.0){
+      reset(result==='goal');
+    }
+  }
+}
+
+function reset(newPos){
+  if(newPos){
+    if(diff==='prog'){
+      const baseD=17+(level-1)*2.2;
+      D=Math.min(29,baseD+(Math.random()*2-1)*1.2);
+      x0=(Math.random()*2-1)*Math.min(7,3+(level-1)*0.9);
+    } else {
+      D=18+Math.random()*10;
+      x0=(Math.random()*2-1)*7;
+    }
+    $('inDir').value=0;
+  }
+  setup();state='aim';ball=null;trail=[];result=null;cross=null;pitando=false;
+  $('btnKick').disabled=false;$('btnPos').disabled=false;$('banner').hidden=true;refresh();
+}
+
+/* =====================================================================
+   8. DIBUJO DEL ESTADIO Y FLECHA DE APUNTADO
+   ===================================================================== */
+const crowd=[];(function(){let s=7;const rnd=()=>(s=(s*16807)%2147483647)/2147483647;
+  const cols=['#e3c04a','#c9504f','#4d78c9','#dcdcdc','#3c9d68','#e08a3e','#8a6fc9'];
+  for(let t=0;t<12;t++)for(let x=-36;x<36;x+=0.66)if(rnd()>0.07)crowd.push({x:x+rnd()*0.3,t:t,c:cols[rnd()*cols.length|0],ph:rnd()*6.28})})();
+const ADS=['FERIA DE FÍSICA','y = v·t − ½·g·t²','TIRO PARABÓLICO','x = v·cos θ·t','EFECTO MAGNUS','g = 9,81 m/s²'];
+
+function player(pos,o){
+  const p=proj(pos);if(!p)return;const s=p[2],g=proj([pos[0],0,pos[2]]);
+  if(g){ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(g[0],g[1],0.34*s,0.09*s,0,0,6.3);ctx.fill()}
+  ctx.save();ctx.translate(p[0],p[1]-0.9*s);ctx.rotate(o.rot||0);ctx.translate(0,0.9*s);
+  ctx.fillStyle=o.socks;ctx.fillRect(-0.2*s,-0.45*s,0.16*s,0.45*s);ctx.fillRect(0.04*s,-0.45*s,0.16*s,0.45*s);
+  ctx.fillStyle=o.shorts;ctx.fillRect(-0.23*s,-0.92*s,0.46*s,0.5*s);
+  ctx.fillStyle=o.jersey;ctx.fillRect(-0.25*s,-1.52*s,0.5*s,0.64*s);
+  ctx.strokeStyle=o.jersey;ctx.lineWidth=0.11*s;ctx.lineCap='round';ctx.beginPath();
+  if(o.up){ctx.moveTo(-0.24*s,-1.45*s);ctx.lineTo(-0.5*s,-1.95*s);ctx.moveTo(0.24*s,-1.45*s);ctx.lineTo(0.5*s,-1.95*s)}
+  else{ctx.moveTo(-0.27*s,-1.45*s);ctx.lineTo(-0.2*s,-0.95*s);ctx.moveTo(0.27*s,-1.45*s);ctx.lineTo(0.2*s,-0.95*s)}
+  ctx.stroke();
+  ctx.fillStyle='#d9a67c';ctx.beginPath();ctx.arc(0,-1.68*s,0.135*s,0,6.3);ctx.fill();
+  ctx.fillStyle='#2a1c14';ctx.beginPath();ctx.arc(0,-1.72*s,0.135*s,3.14,6.29);ctx.fill();
+  ctx.restore();
+}
+
+function drawBall(p3){
+  const g=proj([p3[0],0,p3[2]]),p=proj(p3);if(!p)return;const r=R*p[2];
+  if(g){ctx.fillStyle='rgba(0,0,0,'+Math.max(0.1,0.42-p3[1]*0.07)+')';ctx.beginPath();ctx.ellipse(g[0],g[1],r*1.25,r*0.42,0,0,6.3);ctx.fill()}
+  const gr=ctx.createRadialGradient(p[0]-r*0.35,p[1]-r*0.4,r*0.1,p[0],p[1],r);gr.addColorStop(0,'#fff');gr.addColorStop(1,'#b9c0cc');
+  ctx.fillStyle=gr;ctx.beginPath();ctx.arc(p[0],p[1],r,0,6.3);ctx.fill();
+  const a=shotT*(6+(+$('inSpin').value)/12);ctx.fillStyle='#1b2233';
+  for(let i=0;i<3;i++){const an=a+i*2.09;ctx.beginPath();ctx.arc(p[0]+Math.cos(an)*r*0.52,p[1]+Math.sin(an)*r*0.52,r*0.22,0,6.3);ctx.fill()}
+  
+  // Halo interactivo pulsante sobre el balón mientras se apunta
+  if(state==='aim'){
+    const pulse=Math.sin(time*5)*0.25+0.75;
+    ctx.strokeStyle=mouseAim.active?'rgba(56,217,212,'+pulse+')':'rgba(255,210,63,'+pulse+')';
+    ctx.lineWidth=mouseAim.active?3.5:2.5;
+    ctx.beginPath();
+    ctx.arc(p[0],p[1],r*(mouseAim.active?1.5:1.35),0,6.3);
+    ctx.stroke();
+  }
+}
+
+function draw(){
+  ctx.setTransform(1,0,0,1,0,0);
+  const sky=ctx.createLinearGradient(0,0,0,hz);sky.addColorStop(0,'#04070e');sky.addColorStop(1,'#142038');
+  ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#0c2618';ctx.fillRect(0,hz,W,H-hz);
+  
+  /* Tribuna y público */
+  poly([[-75,1,D+6],[75,1,D+6],[75,9.8,D+24.5],[-75,9.8,D+24.5]],'#121b2e');
+  for(const c of crowd){
+    const hop=celebrate>0?Math.abs(Math.sin(time*9+c.ph))*0.4*celebrate:Math.sin(time*1.4+c.ph)*0.03;
+    const p=proj([c.x,1.35+c.t*0.72+hop,D+6.8+c.t*1.5]);if(!p||p[0]<-20||p[0]>W+20)continue;const s=p[2];
+    ctx.fillStyle=c.c;ctx.globalAlpha=0.8;ctx.fillRect(p[0]-0.2*s,p[1]-0.5*s,0.4*s,0.5*s);
+    ctx.fillStyle='#caa07e';ctx.fillRect(p[0]-0.1*s,p[1]-0.72*s,0.2*s,0.2*s);
+  }
+  ctx.globalAlpha=1;
+  poly([[-75,9.8,D+24.5],[75,9.8,D+24.5],[75,12,D+24.5],[-75,12,D+24.5]],'#080c16');
+  poly([[-75,9.8,D+24.4],[75,9.8,D+24.4],[75,10.05,D+24.4],[-75,10.05,D+24.4]],'#ffe9a8');
+  
+  /* Reflectores */
+  ctx.globalCompositeOperation='lighter';
+  for(const lx of[-30,-10,10,30]){const p=proj([lx,11.2,D+24.4]);if(!p)continue;const r=130*q;
+    const g=ctx.createRadialGradient(p[0],p[1],0,p[0],p[1],r);g.addColorStop(0,'rgba(255,244,200,.85)');g.addColorStop(0.15,'rgba(255,230,150,.3)');g.addColorStop(1,'rgba(255,230,150,0)');
+    ctx.fillStyle=g;ctx.fillRect(p[0]-r,p[1]-r,r*2,r*2)}
+  ctx.globalCompositeOperation='source-over';
+  
+  /* Césped y franjas */
+  let i=0;for(let z=-16.5;z<D+5;z+=5.5,i++)poly([[-70,0,z],[70,0,z],[70,0,Math.min(z+5.5,D+5)],[-70,0,Math.min(z+5.5,D+5)]],i%2?'#1d7842':'#228c4c');
+  gline(-60,D,60,D);gline(-20.16,D-16.5,20.16,D-16.5);gline(-20.16,D-16.5,-20.16,D);gline(20.16,D-16.5,20.16,D);
+  gline(-9.16,D-5.5,9.16,D-5.5);gline(-9.16,D-5.5,-9.16,D);gline(9.16,D-5.5,9.16,D);
+  for(let a=0.65;a<2.49;a+=0.115)gline(Math.cos(a)*9.15,D-11-Math.sin(a)*9.15,Math.cos(a+0.115)*9.15,D-11-Math.sin(a+0.115)*9.15);
+  poly([[-0.15,0,D-11.15],[0.15,0,D-11.15],[0.15,0,D-10.85],[-0.15,0,D-10.85]],'#fff');
+  
+  /* Vallas publicitarias */
+  for(let n=0;n<8;n++){const xa=-40+n*10,a=proj([xa,1.05,D+5]),b=proj([xa+10,0,D+5]);
+    poly([[xa,0,D+5],[xa+10,0,D+5],[xa+10,1.05,D+5],[xa,1.05,D+5]],n%2?'#0e2a5e':'#e9edf5');
+    if(a&&b){const h=b[1]-a[1];ctx.fillStyle=n%2?'#ffd23f':'#0e2a5e';ctx.font=(h*0.6)+'px Anton,Impact,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(ADS[n%ADS.length],(a[0]+b[0])/2,(a[1]+b[1])/2+h*0.04,(b[0]-a[0])*0.9)}}
+  
+  /* Red */
+  ctx.strokeStyle='rgba(255,255,255,.3)';ctx.lineWidth=Math.max(1,q);ctx.beginPath();
+  for(let x=-GW;x<=GW+0.01;x+=0.458){seg3([x,0,D+2],[x,GH,D+2]);seg3([x,GH,D],[x,GH,D+2])}
+  for(let y=0;y<=GH+0.01;y+=0.407){seg3([-GW,y,D+2],[GW,y,D+2]);seg3([-GW,y,D],[-GW,y,D+2]);seg3([GW,y,D],[GW,y,D+2])}
+  for(let z=D;z<=D+2.01;z+=0.5){seg3([-GW,GH,z],[GW,GH,z]);seg3([-GW,0,z],[-GW,GH,z]);seg3([GW,0,z],[GW,GH,z])}
+  ctx.stroke();
+  
+  const flying=state==='fly'&&ball;
+  if(flying&&ball.p[2]>D)drawBall(ball.p);
+  
+  /* Arquero */
+  let kx=k0,rot=0,ky=0;
+  if(flying){kx=keeperX(shotT);const m=Math.max(-1,Math.min(1,(kx-k0)/2.2));rot=m*1.15;ky=Math.abs(m)*Math.min(cross?cross.y:0.5,1.5)*0.6}
+  player([kx,ky,D-0.15],{jersey:'#ff3380',shorts:'#181820',socks:'#ff3380',rot:rot,up:true});
+  
+  /* Postes y travesaño */
+  const pl=proj([-GW,0,D]),pr=proj([GW,0,D]),tl=proj([-GW,GH,D]),tr=proj([GW,GH,D]);
+  if(pl&&pr&&tl&&tr){ctx.strokeStyle='#fff';ctx.lineWidth=0.13*pl[2];ctx.lineJoin='round';ctx.lineCap='butt';ctx.beginPath();ctx.moveTo(pl[0],pl[1]);ctx.lineTo(tl[0],tl[1]);ctx.lineTo(tr[0],tr[1]);ctx.lineTo(pr[0],pr[1]);ctx.stroke()}
+  
+  const bu=flying?uw(ball.p)[0]:0;
+  if(flying&&ball.p[2]<=D&&bu>=WALLU)drawBall(ball.p);
+  
+  /* Barrera */
+  const j=flying?wallJump(shotT):0;
+  for(let n=0;n<wallN;n++)player(wpos(WALLU,wallW0+(n-(wallN-1)/2)*0.6,j),{jersey:'#f4f4f4',shorts:'#12305f',socks:'#f4f4f4'});
+  
+  /* Guía de puntos y flecha dinámica con comba visual */
+  if(state==='aim'){
+    const pr2=predict();
+    if($('inGuide').checked){
+      ctx.fillStyle='rgba(255,210,63,.92)';
+      for(let n=1;n<pr2.pts.length;n+=2){
+        const p=proj(pr2.pts[n].p);
+        if(p){
+          ctx.beginPath();
+          const pR=Math.max(1.8*q,0.038*p[2]);
+          ctx.arc(p[0],p[1],pR,0,6.3);
+          ctx.fill();
+        }
+      }
+    }
+    
+    // Flecha curva en el piso según dirección y efecto Magnus
+    const dirVal=+$('inDir').value;
+    const spinVal=+$('inSpin').value;
+    const arrowCol=mouseAim.active?'rgba(56,217,212,.9)':'rgba(255,210,63,.85)';
+    
+    // Proyección de la flecha guía curva
+    const len=3.6;
+    const steps=10;
+    const arrowPtsL=[],arrowPtsR=[];
+    const wHalf=0.09;
+    
+    for(let s=0;s<=steps;s++){
+      const frac=s/steps;
+      const dist=0.4+frac*len;
+      // Desvío angular compuesto por dirección + curvatura acumulada de la comba
+      const ang=yaw+(dirVal*Math.PI/180) + (spinVal*0.0035*frac*frac);
+      const px=x0+Math.sin(ang)*dist;
+      const pz=Math.cos(ang)*dist;
+      const nx=Math.cos(ang)*wHalf;
+      const nz=-Math.sin(ang)*wHalf;
+      arrowPtsL.push([px-nx,0.015,pz-nz]);
+      arrowPtsR.push([px+nx,0.015,pz+nz]);
+    }
+    const fullPoly=[...arrowPtsL,...arrowPtsR.reverse()];
+    poly(fullPoly,arrowCol);
+    
+    // Punta de la flecha
+    const lastAng=yaw+(dirVal*Math.PI/180)+(spinVal*0.0035);
+    const tipDist=0.4+len+0.7;
+    const tipX=x0+Math.sin(lastAng)*tipDist;
+    const tipZ=Math.cos(lastAng)*tipDist;
+    const baseDist=0.4+len;
+    const b1x=x0+Math.sin(lastAng)*baseDist - Math.cos(lastAng)*0.32;
+    const b1z=Math.cos(lastAng)*baseDist + Math.sin(lastAng)*0.32;
+    const b2x=x0+Math.sin(lastAng)*baseDist + Math.cos(lastAng)*0.32;
+    const b2z=Math.cos(lastAng)*baseDist - Math.sin(lastAng)*0.32;
+    poly([[b1x,0.02,b1z],[tipX,0.02,tipZ],[b2x,0.02,b2z]],arrowCol);
+    
+    drawBall([x0,R,0]);
+  }else if(flying){
+    trail.forEach((t,n)=>{const p=proj(t);if(p){ctx.fillStyle='rgba(255,255,255,'+(n/trail.length*0.35)+')';ctx.beginPath();ctx.arc(p[0],p[1],R*p[2]*(0.4+n/trail.length*0.5),0,6.3);ctx.fill()}});
+    if(bu<WALLU)drawBall(ball.p);
+  }
+  
+  // Viñeta estética
+  const vg=ctx.createRadialGradient(W/2,H*0.55,H*0.35,W/2,H*0.55,W*0.75);
+  vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.5)');
+  ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
+}
+
+/* =====================================================================
+   9. GRÁFICA LATERAL
+   ===================================================================== */
+function drawGraph(){
+  const dpr=Math.min(2,window.devicePixelRatio||1),w=gv.clientWidth,h=gv.clientHeight;
+  if(gv.width!==Math.round(w*dpr)){gv.width=Math.round(w*dpr);gv.height=Math.round(h*dpr)}
+  gx.setTransform(dpr,0,0,dpr,0,0);gx.clearRect(0,0,w,h);
+  const pr=state==='aim'?predict():null;
+  const top=Math.max(4,pr?pr.hmax:apex)+1,uM=L+4,m={l:34,r:10,t:14,b:26};
+  const X=u=>m.l+u/uM*(w-m.l-m.r),Y=y=>h-m.b-y/top*(h-m.t-m.b);
+  gx.font='600 12px Barlow Condensed,Arial Narrow,sans-serif';gx.textBaseline='middle';
+  const ys=top>8?2:1;
+  for(let y=0;y<=top;y+=ys){gx.strokeStyle='rgba(255,255,255,.07)';gx.beginPath();gx.moveTo(m.l,Y(y));gx.lineTo(w-m.r,Y(y));gx.stroke();gx.fillStyle='#93a3bf';gx.textAlign='right';gx.fillText(y+' m',m.l-6,Y(y))}
+  gx.textAlign='center';for(let u=0;u<=uM;u+=5){gx.fillStyle='#93a3bf';gx.fillText(u+(u?'':' m'),X(u),h-m.b+13)}
+  gx.fillStyle='#1f8046';gx.fillRect(m.l,Y(0),w-m.l-m.r,3);
+  gx.fillStyle='#e9edf5';gx.fillRect(X(WALLU)-3,Y(WALLH),6,Y(0)-Y(WALLH));gx.fillText('Barrera',X(WALLU),Y(WALLH)-9);
+  gx.fillRect(X(L)-2,Y(GH),4,Y(0)-Y(GH));gx.fillRect(X(L)-2,Y(GH)-2,(X(L+2)-X(L)),3);gx.fillText('Arco',X(L)+4,Y(GH)-11);
+  if(pr&&$('inGuide').checked){gx.strokeStyle='rgba(255,210,63,.75)';gx.setLineDash([4,5]);gx.lineWidth=2;gx.beginPath();gx.moveTo(X(0),Y(0));pr.pts.forEach(p=>gx.lineTo(X(p.u),Y(p.y)));gx.stroke();gx.setLineDash([])}
+  if(lastGraph&&state!=='aim'){gx.strokeStyle='#ffd23f';gx.lineWidth=2.5;gx.beginPath();lastGraph.forEach((p,i)=>i?gx.lineTo(X(p.u),Y(p.y)):gx.moveTo(X(p.u),Y(p.y)));gx.stroke();
+    const e=lastGraph[lastGraph.length-1];gx.fillStyle='#fff';gx.beginPath();gx.arc(X(e.u),Y(e.y),4.5,0,6.3);gx.fill();
+    gx.fillStyle='#ffd23f';gx.textAlign='left';gx.fillText('h máx '+fmt(apex,2)+' m',m.l+8,m.t+4)}
+  else{gx.fillStyle='#fff';gx.beginPath();gx.arc(X(0),Y(0),4.5,0,6.3);gx.fill()}
+}
+
+/* =====================================================================
+   10. INTERFAZ: MARCADOR, FÓRMULAS, HUD Y CONTROLES
+   ===================================================================== */
+function paintScore(){
+  $('sGoals').textContent=stats.g;
+  $('sShots').textContent=stats.s;
+  $('sStreak').textContent=stats.k;
+  $('sBest').textContent=stats.b;
+  if($('sLevel'))$('sLevel').textContent=diff==='prog'?level:'Libre';
+}
+function paintMute(){
+  const m=Sonido.isMuted();
+  $('btnMute').classList.toggle('muted',m);
+}
+function setHint(id,cls,txt){const el=$(id);el.className=cls;el.textContent=txt}
+
+function refresh(){
+  const a=+$('inAngle').value,v=+$('inSpeed').value,d=+$('inDir').value,sp=+$('inSpin').value;
+  const P=PLACES[place],g=P.g,r=a*Math.PI/180;
+  
+  $('oAngle').textContent=fmt(a)+'°';
+  $('oSpeed').textContent=fmt(v)+' m/s · '+Math.round(v*3.6)+' km/h';
+  $('oDir').textContent=d===0?'al centro':fmt(Math.abs(d),2)+'° '+(d<0?'izq.':'der.');
+  $('oSpin').textContent=sp===0?'sin efecto':Math.abs(sp)+'% '+(sp<0?'izq.':'der.');
+  
+  // Actualizar también HUD de mouse
+  $('hudAngle').textContent=fmt(a)+'°';
+  $('hudSpeed').textContent=fmt(v)+' m/s ('+Math.round(v*3.6)+' km/h)';
+  $('hudDir').textContent=d===0?'0° (centro)':fmt(Math.abs(d),1)+'° '+(d<0?'izq.':'der.');
+  $('hudSpin').textContent=sp===0?'Sin efecto':Math.abs(sp)+'% '+(sp<0?'curva izq.':'curva der.');
+
+  const air=P.rho>0.1;$('inSpin').disabled=!air;
+  $('spinNote').textContent=air?'El giro del balón lo desvía de lado: efecto Magnus.':'Aquí casi no hay aire: sin aire no hay efecto ni frenado. Parábola pura.';
+  $('placeNote').textContent=PLACE_NOTES[place];
+  
+  const dd=getKeeperParams();
+  if(diff==='prog'){
+    const wCount=Math.min(6,3+(level-1));
+    $('diffNote').textContent='Nivel '+level+': barrera de '+wCount+' jugadores. Arquero reacciona a los '+fmt(dd[0],2)+' s y se lanza a '+fmt(dd[1],1)+' m/s. (Sube de nivel cada 2 goles).';
+  } else {
+    $('diffNote').textContent='Modo libre: Arquero reacciona '+fmt(dd[0],2)+' s después del remate y se lanza a '+fmt(dd[1],1)+' m/s.';
+  }
+  paintScore();
+  $('cPlace').textContent=P.n;$('cG').textContent=fmt(g,2);
+  
+  $('gTh').textContent=fmt(a)+'°';$('gV0').textContent=fmt(v)+' m/s';$('gG').textContent=fmt(g,2)+' m/s²';$('gL').textContent=fmt(L)+' m';
+  
+  const vx=v*Math.cos(r),vy=v*Math.sin(r),yL=L*Math.tan(r)-g*L*L/(2*vx*vx),yW=WALLU*Math.tan(r)-g*WALLU*WALLU/(2*vx*vx);
+  $('fVx').textContent=fmt(vx)+' m/s';$('fVy').textContent=fmt(vy)+' m/s';$('fH').textContent=fmt(vy*vy/(2*g),2)+' m';
+  $('fT').textContent=fmt(2*vy/g,2)+' s';$('fR').textContent=fmt(v*v*Math.sin(2*r)/g)+' m';
+  $('fYW').textContent=yW>0?fmt(yW,2)+' m':'no llega';$('fYL').textContent=yL>0?fmt(yL,2)+' m':'no llega';
+  $('verdict').textContent=yL<=0?'Con estos valores el balón toca el piso antes del arco (a '+fmt(L)+' m).':yL<GH?'Por altura, este tiro va entre los palos.':'Con estos valores el balón pasa por encima del travesaño.';
+  
+  const salto=WALLH+0.43;
+  if(yW<=0)setHint('hWall','bad','Barrera: el balón cae al piso antes de llegar a ella.');
+  else if(yW<WALLH)setHint('hWall','bad','Barrera: a 9,15 m va a '+fmt(yW,2)+' m y la barrera mide 1,85 m. Choca (o rodéala con efecto).');
+  else if(yW<salto)setHint('hWall','warn','Barrera: pasa a '+fmt(yW,2)+' m, justo encima. Si salta (hasta ≈2,28 m) puede tocarla.');
+  else setHint('hWall','ok','Barrera: pasa a '+fmt(yW,2)+' m, por encima aunque salte.');
+  
+  if(yL<=0)setHint('hGoal','bad','Arco: cae al piso antes de llegar (está a '+fmt(L)+' m).');
+  else if(yL>=GH)setHint('hGoal','bad','Arco: llega a '+fmt(yL,2)+' m, por encima del travesaño (2,44 m).');
+  else setHint('hGoal','ok','Arco: llega a '+fmt(yL,2)+' m de altura, por debajo del travesaño.');
+  
+  $('hNote').textContent=P.rho===0?'Sin aire, el juego sigue exactamente estas fórmulas.':air?'Con aire y efecto, el balón real llega un poco más bajo que esto.':'Con tan poco aire, el juego sigue casi exactamente estas fórmulas.';
+  $('legendChip').hidden=!$('inGuide').checked;
+}
+
+function live(){
+  let t=0,u=0,y=0,v=+$('inSpeed').value;
+  if(ball){t=shotT;u=uw(ball.p)[0];y=ball.p[1]-R;v=Math.hypot(ball.v[0],ball.v[1],ball.v[2])}
+  $('lT').textContent=fmt(t,2)+' s';$('lX').textContent=fmt(u)+' m';$('lY').textContent=fmt(Math.max(0,y),2)+' m';$('lV').textContent=Math.round(v*3.6)+' km/h';
+  $('cState').textContent=mouseAim.active?'Ajustando tiro con ratón... (suelta para patear)':pitando?'Pito del árbitro…':state==='fly'?(result?'Mira la explicación':'Balón en el aire'):'Arrastra el balón para apuntar';
+}
+
+function segInit(id,cb){
+  const el=$(id);el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  el.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));cb(b.dataset.v)})}
+segInit('segPlace',v=>{place=v;refresh()});
+segInit('segDiff',v=>{diff=v;setup();refresh()});
+['inAngle','inSpeed','inDir','inSpin'].forEach(id=>$(id).addEventListener('input',refresh));
+$('inGuide').addEventListener('change',refresh);
+$('btnKick').addEventListener('click',kick);
+$('btnPos').addEventListener('click',()=>{if(state==='aim'&&!pitando)reset(true)});
+$('btnMute').addEventListener('click',()=>{Sonido.setMuted(!Sonido.isMuted());paintMute()});
+$('btnDiagClose').addEventListener('click',()=>{ $('banner').hidden=true; reset(result==='goal'); });
+$('btnNextShot').addEventListener('click',()=>{ $('banner').hidden=true; reset(result==='goal'); });
+$('btnRetryShot').addEventListener('click',()=>{ $('banner').hidden=true; reset(false); });
+
+/* =====================================================================
+   11. CONTROL POR RATÓN / TOUCH (APUNTAR Y DISPARAR ARRASTRANDO EL BALÓN)
+   ===================================================================== */
+const stageEl=$('stageSection');
+
+function getBallScreenPos(){
+  const p=proj([x0,R,0]);
+  if(!p)return null;
+  const rect=cv.getBoundingClientRect();
+  return {
+    x:rect.left+(p[0]/W)*rect.width,
+    y:rect.top+(p[1]/H)*rect.height,
+    radius:R*p[2]*(rect.width/W)*1.8
+  };
+}
+
+function handlePointerDown(e){
+  if(state!=='aim'||pitando)return;
+  const ballPos=getBallScreenPos();
+  if(!ballPos)return;
+  const clientX=e.touches?e.touches[0].clientX:e.clientX;
+  const clientY=e.touches?e.touches[0].clientY:e.clientY;
+  const dist=Math.hypot(clientX-ballPos.x,clientY-ballPos.y);
+  
+  // Si presiona cerca del balón o en la zona inferior
+  if(dist<ballPos.radius*2.8||clientY>ballPos.y-ballPos.radius*1.5){
+    mouseAim.active=true;
+    mouseAim.startX=clientX;
+    mouseAim.startY=clientY;
+    mouseAim.curX=clientX;
+    mouseAim.curY=clientY;
+    mouseAim.initAngle=+$('inAngle').value;
+    mouseAim.initSpeed=+$('inSpeed').value;
+    mouseAim.initDir=+$('inDir').value;
+    mouseAim.initSpin=+$('inSpin').value;
+    
+    stageEl.classList.add('dragging');
+    $('hudMouse').hidden=false;
+    refresh();
+    if(e.cancelable)e.preventDefault();
+  }
+}
+
+function handlePointerMove(e){
+  if(!mouseAim.active||state!=='aim')return;
+  const clientX=e.touches?e.touches[0].clientX:e.clientX;
+  const clientY=e.touches?e.touches[0].clientY:e.clientY;
+  mouseAim.curX=clientX;
+  mouseAim.curY=clientY;
+  
+  const dx=clientX-mouseAim.startX;
+  const dy=clientY-mouseAim.startY; // dy > 0 es arrastrar hacia atrás (más potencia), dy < 0 hacia arriba
+  
+  // Dirección: sensible a movimiento horizontal
+  const newDir=Math.max(-22,Math.min(22,mouseAim.initDir+(dx*0.14)));
+  $('inDir').value=newDir;
+  
+  // Velocidad: arrastrar hacia atrás aumenta potencia
+  const speedDelta=(dy*0.09)-(Math.abs(dx)*0.03);
+  const newSpeed=Math.max(12,Math.min(36,mouseAim.initSpeed+speedDelta));
+  $('inSpeed').value=newSpeed;
+  
+  // Ángulo: arrastrar ligeramente hacia arriba eleva
+  const angleDelta=(-dy*0.07);
+  const newAngle=Math.max(4,Math.min(45,mouseAim.initAngle+angleDelta));
+  $('inAngle').value=newAngle;
+  
+  // Efecto: según desplazamiento horizontal más pronunciado
+  if(PLACES[place].rho>0.1){
+    const newSpin=Math.max(-100,Math.min(100,mouseAim.initSpin+(dx*0.45)));
+    $('inSpin').value=Math.round(newSpin/5)*5;
+  }
+  
+  refresh();
+  if(e.cancelable)e.preventDefault();
+}
+
+function handlePointerUp(e){
+  if(!mouseAim.active)return;
+  mouseAim.active=false;
+  stageEl.classList.remove('dragging');
+  $('hudMouse').hidden=true;
+  
+  const dx=mouseAim.curX-mouseAim.startX;
+  const dy=mouseAim.curY-mouseAim.startY;
+  
+  // Si el usuario arrastró al menos 15px, se considera remate listo
+  if(Math.hypot(dx,dy)>15){
+    kick();
+  }
+}
+
+// Eventos de ratón y táctiles en el canvas
+cv.addEventListener('mousedown',handlePointerDown);
+window.addEventListener('mousemove',handlePointerMove);
+window.addEventListener('mouseup',handlePointerUp);
+
+cv.addEventListener('touchstart',handlePointerDown,{passive:false});
+window.addEventListener('touchmove',handlePointerMove,{passive:false});
+window.addEventListener('touchend',handlePointerUp);
+
+/* =====================================================================
+   12. MODAL Y LÓGICA DE MODO RETO FERIA (TOP 10 LOCALSTORAGE)
+   ===================================================================== */
+function renderLeaderboard(){
+  const tbody=$('boardBody');tbody.innerHTML='';
+  if(!leaderboard.length){
+    tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:14px">Aún no hay puntuaciones registradas. ¡Sé el primero!</td></tr>';
+    return;
+  }
+  leaderboard.slice(0,10).forEach((item,idx)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>#${idx+1}</td><td><b>${item.name}</b></td><td>${item.goals}/5</td><td style="color:var(--flood);font-weight:700">${item.points} pts</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function saveScoreToLeaderboard(name,pts,goals){
+  leaderboard.push({name:name||'Visitante',points:pts,goals:goals,date:Date.now()});
+  leaderboard.sort((a,b)=>b.points-a.points);
+  leaderboard=leaderboard.slice(0,10);
+  try{localStorage.setItem('tl_leaderboard',JSON.stringify(leaderboard))}catch(e){}
+}
+
+function alertRetoFinal(name,pts,goals){
+  $('bTitle').textContent='¡RETO FINALIZADO!';
+  $('bText').textContent=`${name} anotó ${goals} de 5 goles y obtuvo un puntaje total de ${pts} PUNTOS. ¡Excelente tiro parabólico!`;
+  $('banner').className='banner';
+  $('banner').hidden=false;
+}
+
+$('btnRetoMode').addEventListener('click',()=>{
+  if(retoState.active){
+    if(confirm('¿Deseas salir del Modo Reto actual?')){
+      retoState.active=false;
+      $('retoBar').hidden=true;
+      $('btnRetoMode').classList.remove('active');
+      $('retoBtnTxt').textContent='Modo Reto';
+    }
+  } else {
+    $('modalReto').hidden=false;
+    setTimeout(()=>{$('inRetoName').focus()},100);
+  }
+});
+
+$('btnCancelReto').addEventListener('click',()=>{
+  $('modalReto').hidden=true;
+});
+
+$('btnStartReto').addEventListener('click',()=>{
+  const name=($('inRetoName').value.trim())||'Participante';
+  retoState.active=true;
+  retoState.name=name;
+  retoState.shotsLeft=5;
+  retoState.points=0;
+  retoState.goals=0;
+  
+  $('modalReto').hidden=true;
+  $('retoBar').hidden=false;
+  $('btnRetoMode').classList.add('active');
+  $('retoBtnTxt').textContent='Reto: '+name;
+  updateRetoUI();
+  reset(true);
+});
+
+$('btnEndReto').addEventListener('click',()=>{
+  if(confirm('¿Deseas finalizar tu reto ahora con los puntos actuales?')){
+    finishReto();
+  }
+});
+
+$('btnLeaderboard').addEventListener('click',()=>{
+  renderLeaderboard();
+  $('modalLeaderboard').hidden=false;
+});
+
+$('btnCloseBoard').addEventListener('click',()=>{
+  $('modalLeaderboard').hidden=true;
+});
+
+$('btnClearBoard').addEventListener('click',()=>{
+  if(confirm('¿Estás seguro de que deseas borrar la tabla de los 10 mejores puntajes?')){
+    leaderboard=[];
+    try{localStorage.removeItem('tl_leaderboard')}catch(e){}
+    renderLeaderboard();
+  }
+});
+
+/* Teclado */
+addEventListener('keydown',e=>{
+  const tag=e.target.tagName;
+  if(tag==='INPUT'&&e.target.type==='range'&&e.key.startsWith('Arrow'))return;
+  if(tag==='INPUT'&&e.target.type==='text')return;
+  const nud=(id,d)=>{const el=$(id);if(el.disabled)return;el.value=+el.value+d*(+el.step);refresh();e.preventDefault()};
+  const k=e.key.toLowerCase();
+  if(e.key===' '){
+    if(tag!=='BUTTON'&&tag!=='SUMMARY'&&!(tag==='INPUT'&&e.target.type==='checkbox')&&!(tag==='INPUT'&&e.target.type==='text')){
+      if(result){
+        $('banner').hidden=true;
+        reset(result==='goal');
+        e.preventDefault();
+        return;
+      }
+      kick();
+      e.preventDefault();
+    }
+  }
+  else if(e.key==='ArrowLeft')nud('inDir',-2);else if(e.key==='ArrowRight')nud('inDir',2);
+  else if(e.key==='ArrowUp')nud('inAngle',1);else if(e.key==='ArrowDown')nud('inAngle',-1);
+  else if(k==='a')nud('inSpin',-1);else if(k==='d')nud('inSpin',1);else if(k==='w')nud('inSpeed',1);else if(k==='s')nud('inSpeed',-1);
+  else if(k==='m'){Sonido.setMuted(!Sonido.isMuted());paintMute()}
+});
+
+/* =====================================================================
+   13. BUCLE PRINCIPAL
+   ===================================================================== */
+function resize(){const dpr=Math.min(2,window.devicePixelRatio||1),w=cv.clientWidth||960;
+  W=cv.width=Math.round(w*dpr);H=cv.height=Math.round(w*9/16*dpr);q=W/1280;f=W*1.25;hz=H*0.42}
+addEventListener('resize',resize);
+let last=0;
+function frame(ts){
+  const dt=Math.min(0.05,(ts-last)/1000||0);last=ts;time+=dt;
+  if(cv.clientWidth&&Math.abs(cv.clientWidth*Math.min(2,window.devicePixelRatio||1)-W)>2)resize();
+  if(state==='fly')advance(dt);
+  if(celebrate>0)celebrate=Math.max(0,celebrate-dt*0.28);
+  draw();drawGraph();live();requestAnimationFrame(frame);
+}
+setup();resize();refresh();paintScore();paintMute();requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
